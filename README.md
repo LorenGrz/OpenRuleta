@@ -5,8 +5,9 @@ A self-hostable raffle toolkit, backed by Supabase:
 - **`apps/form`** — a public, single-screen sign-up form. Share it by QR code;
   people enter their details and they're in the draw. Deploy it anywhere
   (Vercel, etc.).
-- **`apps/ruleta`** — a local winner-picker wheel. Spin it, mark winners, export
-  a CSV. Reads the same Supabase table. **Runs on your machine only.**
+- **`apps/ruleta`** — a winner-picker wheel. Spin it, mark winners, export a CSV.
+  Reads the same Supabase table. Run it on your machine, or host it behind a
+  password — [your choice](#running-the-wheel-local-or-hosted).
 
 > Not affiliated with any real event. The default sponsor/collaborator entries
 > and logos are placeholders — replace them with your own.
@@ -18,8 +19,8 @@ workspaces · Supabase (`@supabase/supabase-js`).
 
 ```
 apps/
-  form/      public sign-up form            (anon key, deployable)
-  ruleta/    winner-picker wheel            (service_role key, local only)
+  form/      public sign-up form            (anon key, deploy it)
+  ruleta/    winner-picker wheel            (service_role key, local or gated)
 packages/
   config/    @openruleta/config  — ALL branding, copy and event data
   core/      @openruleta/core    — types, validation, Supabase client, DB ops
@@ -48,17 +49,18 @@ supabase/
    cp apps/ruleta/.env.example apps/ruleta/.env.local
    ```
 
-   | Var                         | form | ruleta | Where                                      |
-   | --------------------------- | :--: | :----: | ------------------------------------------ |
-   | `NEXT_PUBLIC_SUPABASE_URL`  |  ✅  |   ✅   | Supabase → Settings → API → Project URL    |
-   | `SUPABASE_ANON_KEY`         |  ✅  |        | Supabase → Settings → API → `anon`         |
-   | `SUPABASE_SERVICE_ROLE_KEY` |      |   ✅   | Supabase → Settings → API → `service_role` |
+   | Var                         | form | ruleta | Where                                        |
+   | --------------------------- | :--: | :----: | -------------------------------------------- |
+   | `NEXT_PUBLIC_SUPABASE_URL`  |  ✅  |   ✅   | Supabase → Settings → API → Project URL      |
+   | `SUPABASE_ANON_KEY`         |  ✅  |        | Supabase → Settings → API → `anon`           |
+   | `SUPABASE_SERVICE_ROLE_KEY` |      |   ✅   | Supabase → Settings → API → `service_role`   |
+   | `RULETA_BASIC_AUTH`         |      |  opt.  | You pick — `user:password`, only when hosted |
 
 4. **Run**
 
    ```bash
    pnpm dev:form     # http://localhost:3000
-   pnpm dev:ruleta   # http://localhost:3100  (local only — see below)
+   pnpm dev:ruleta   # http://localhost:3100  (see "Running the wheel" below)
    ```
 
 ## Make it yours
@@ -77,12 +79,25 @@ Two things live outside it on purpose:
 Replace the placeholder art in `apps/*/public/` (`logo.svg`, `icon.svg`,
 `logos/*.svg`, and `apps/ruleta/public/poster.svg`) with your own.
 
-## The wheel is local-only
+## Running the wheel: local or hosted
 
-`apps/ruleta` uses the **service_role key**, which bypasses Row Level Security,
-and none of its API routes are authenticated. That's fine for a tool running on
-your laptop during a draw — and unsafe on a public URL. Don't deploy it. Deploy
-`apps/form`; run `apps/ruleta` with `pnpm dev:ruleta` when you need it.
+`apps/ruleta` uses the **service_role key**, which bypasses Row Level Security.
+So its API can read, update and delete every participant — and by default it is
+**not authenticated**. You choose how to run it:
+
+- **Local (default).** `pnpm dev:ruleta`, or `pnpm --filter @openruleta/ruleta
+build && pnpm --filter @openruleta/ruleta start`. Leave `RULETA_BASIC_AUTH`
+  unset. Nothing is exposed; this is the simplest setup for a draw run from a
+  laptop.
+- **Hosted (Vercel, a VPS, wherever).** Set `RULETA_BASIC_AUTH="user:password"`
+  in the deployment's environment along with the two Supabase vars. A
+  middleware then challenges **every** request — pages and API — with HTTP Basic
+  Auth, so the service_role-backed routes are never open to the public URL. Use
+  a strong password; add your host's rate limiting or IP allow-list on top if
+  you can.
+
+Do not host `apps/ruleta` without `RULETA_BASIC_AUTH` set. `apps/form` is the
+one meant to be public and needs no gate (it can only INSERT).
 
 ## How the data works
 

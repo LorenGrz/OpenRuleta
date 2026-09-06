@@ -37,6 +37,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# next dev regenerates these per app on every run
+apps/*/AGENTS.md
+apps/*/CLAUDE.md
+
 # generated artefacts
 **/qr.png
 **/qr.svg

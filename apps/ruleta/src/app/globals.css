@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@import "@openruleta/ui/theme.css";
+
+/* Tailwind v4 does not scan symlinked workspace packages by default. */
+@source "../../../../packages/ui/src";
+
+body {
+  font-family: var(--font-sans);
+  background-color: #050505;
+}

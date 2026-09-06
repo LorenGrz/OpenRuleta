@@ -1,0 +1,56 @@
+/**
+ * Shared design tokens + marquee animation for both apps.
+ * Imported from each app's `globals.css` right after `@import "tailwindcss"`.
+ *
+ * Change the palette here — these Tailwind v4 `@theme` variables generate the
+ * `bg-primary`, `text-ink`, `rounded-pill`, … utilities used across the apps.
+ */
+
+@theme {
+  --color-primary: #2563eb;
+  --color-primary-deep: #1e3a8a;
+  --color-primary-hover: #1d4ed8;
+  --color-ink: #0b1220;
+  --color-surface: #ffffff;
+  --color-tint: #eef2fb;
+  --color-input-border: #cbd5e1;
+  --color-error: #d64545;
+
+  --font-sans:
+    var(--font-brand), ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --radius-pill: 9999px;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee var(--marquee-duration, 45s) linear infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.marquee-paused:hover .animate-marquee {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+  }
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

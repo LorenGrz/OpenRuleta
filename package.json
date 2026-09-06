@@ -1,0 +1,25 @@
+{
+  "name": "openruleta",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-hostable public raffle sign-up form + local winner-picker wheel, backed by Supabase.",
+  "license": "MIT",
+  "packageManager": "pnpm@11.24.0",
+  "scripts": {
+    "dev:form": "pnpm --filter @openruleta/form dev",
+    "dev:ruleta": "pnpm --filter @openruleta/ruleta dev -p 3100",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9",
+    "eslint": "^9",
+    "prettier": "3.9.6",
+    "typescript": "^5",
+    "typescript-eslint": "^8"
+  }
+}

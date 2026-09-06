@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" role="img" aria-label="Your logo here">
+  <rect x="2" y="2" width="196" height="76" rx="10" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6 5"/>
+  <circle cx="46" cy="40" r="16" fill="none" stroke="#94a3b8" stroke-width="3"/>
+  <circle cx="46" cy="40" r="4" fill="#94a3b8"/>
+  <text x="112" y="37" font-family="Montserrat, Arial, sans-serif" font-size="15" font-weight="700" fill="#64748b" text-anchor="middle">YOUR</text>
+  <text x="112" y="56" font-family="Montserrat, Arial, sans-serif" font-size="15" font-weight="700" fill="#64748b" text-anchor="middle">LOGO</text>
+</svg>

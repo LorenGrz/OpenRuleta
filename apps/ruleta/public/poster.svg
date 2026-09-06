@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1600" role="img" aria-label="Raffle poster placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#1e3a8a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1080" height="1600" fill="url(#bg)"/>
+  <rect x="290" y="470" width="500" height="500" rx="32" fill="#ffffff"/>
+  <g fill="none" stroke="#cbd5e1" stroke-width="10">
+    <rect x="360" y="540" width="360" height="360" rx="16"/>
+    <path d="M360 720h360M540 540v360"/>
+  </g>
+  <text x="540" y="360" font-family="Montserrat, Arial, sans-serif" font-size="72" font-weight="800" fill="#ffffff" text-anchor="middle">SCAN THE QR</text>
+  <text x="540" y="1090" font-family="Montserrat, Arial, sans-serif" font-size="30" font-weight="600" fill="#ffffff" text-anchor="middle" opacity="0.85">Replace public/poster.svg with your event's QR poster</text>
+  <text x="540" y="1140" font-family="Montserrat, Arial, sans-serif" font-size="26" font-weight="600" fill="#ffffff" text-anchor="middle" opacity="0.6">e.g. pnpm --filter @openruleta/form poster &lt;url&gt;</text>
+</svg>

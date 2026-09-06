@@ -39,8 +39,14 @@ function writeTitle(value: string): void {
   listeners.forEach((l) => l());
 }
 
+/** Current draw title, kept in sync with edits. Used by the winner modal to
+ *  pre-fill the prize with what is being raffled. */
+export function useRaffleTitle(): string {
+  return useSyncExternalStore(subscribe, readTitle, () => DEFAULT_TITLE);
+}
+
 export function EditableTitle() {
-  const title = useSyncExternalStore(subscribe, readTitle, () => DEFAULT_TITLE);
+  const title = useRaffleTitle();
   const [editing, setEditing] = useState(false);
 
   function commit(next: string) {

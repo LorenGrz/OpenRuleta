@@ -15,12 +15,20 @@ const confettiColors = siteConfig.ruleta.confettiColors;
 type Props = {
   winner: Participant;
   busy?: boolean;
+  /** Seeds the prize input so the operator doesn't retype the draw title. */
+  defaultPrize?: string;
   onConfirm: (prize: string) => void;
   onSpinAgain: () => void;
 };
 
-export function WinnerModal({ winner, busy, onConfirm, onSpinAgain }: Props) {
-  const [prize, setPrize] = useState(winner.prize ?? "");
+export function WinnerModal({
+  winner,
+  busy,
+  defaultPrize,
+  onConfirm,
+  onSpinAgain,
+}: Props) {
+  const [prize, setPrize] = useState(winner.prize ?? defaultPrize ?? "");
 
   useEffect(() => {
     const end = Date.now() + 1200;

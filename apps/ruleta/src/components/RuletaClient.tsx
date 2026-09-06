@@ -6,7 +6,7 @@ import { siteConfig } from "@openruleta/config";
 import { Wordmark } from "@openruleta/ui";
 
 import { CollaboratorCarousel } from "@/components/CollaboratorCarousel";
-import { EditableTitle } from "@/components/EditableTitle";
+import { EditableTitle, useRaffleTitle } from "@/components/EditableTitle";
 import { ParticipantsPanel } from "@/components/ParticipantsPanel";
 import { QrOverlay } from "@/components/QrOverlay";
 import { SponsorCarousel } from "@/components/SponsorCarousel";
@@ -63,6 +63,10 @@ export function RuletaClient() {
   // Session-only skips ("skip and spin again"): NOT persisted, that person did
   // not win. Confirmed winners are excluded via won_at (Supabase).
   const [skipIds, setSkipIds] = useState<Set<string>>(new Set());
+
+  // Seeds the winner modal's prize field so the operator doesn't retype what
+  // is being raffled.
+  const raffleTitle = useRaffleTitle();
 
   const [refreshing, setRefreshing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -411,6 +415,7 @@ export function RuletaClient() {
         <WinnerModal
           winner={modalWinner}
           busy={busy}
+          defaultPrize={raffleTitle}
           onConfirm={confirmWinner}
           onSpinAgain={removeAndReopen}
         />

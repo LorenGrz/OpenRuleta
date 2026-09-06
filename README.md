@@ -1,21 +1,40 @@
 # OpenRuleta
 
-A self-hostable raffle toolkit, backed by Supabase:
+A self-hostable raffle toolkit, backed by Supabase. Two small Next.js apps that
+share one database:
 
 - **`apps/form`** — a public, single-screen sign-up form. Share it by QR code;
-  people enter their details and they're in the draw. Deploy it anywhere
-  (Vercel, etc.).
-- **`apps/ruleta`** — a winner-picker wheel. Spin it, mark winners, export a CSV.
-  Reads the same Supabase table. Run it on your machine, or host it behind a
-  password — [your choice](#running-the-wheel-local-or-hosted).
+  people enter their details from their phone and they're in the draw. Deploy it
+  anywhere (Vercel, Netlify, a VPS).
+- **`apps/ruleta`** — a winner-picker wheel for whoever runs the draw. Spin it,
+  assign a prize, mark winners (they stay out of later spins), export a CSV.
+  Run it on your laptop, or host it behind a password.
 
-> Not affiliated with any real event. The default sponsor/collaborator entries
-> and logos are placeholders — replace them with your own.
+> Built for and used live at **Data Saturday LATAM Argentina 2026**: ~300
+> attendees signed up from their phones during the event while the wheel drew
+> winners on stage, all against a single free-tier Supabase project.
+>
+> This repo is the generic, de-branded version. The default event name, copy,
+> colours, sponsor/collaborator lists and logos are placeholders — make them
+> yours in one file (see [Make it yours](#make-it-yours)).
+
+## Screenshots
+
+|          Sign-up form          |              "You're in" ticket              |
+| :----------------------------: | :------------------------------------------: |
+| ![Sign-up form](docs/form.png) | ![Confirmation ticket](docs/form-ticket.png) |
+
+|          Winner wheel           |      Winner + prize (pre-filled)       |
+| :-----------------------------: | :------------------------------------: |
+| ![Winner wheel](docs/wheel.png) | ![Winner modal](docs/winner-modal.png) |
+
+The prize field is pre-filled with the current wheel title, so whoever runs the
+draw doesn't retype what's being raffled.
 
 ## Stack
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · pnpm
-workspaces · Supabase (`@supabase/supabase-js`).
+workspaces · Supabase (`@supabase/supabase-js`). No other runtime services.
 
 ```
 apps/
@@ -31,81 +50,107 @@ supabase/
 
 ## Setup
 
-1. **Install**
+You need Node 20+, [pnpm](https://pnpm.io) 9+, and a Supabase project.
 
-   ```bash
-   pnpm install
-   ```
+### 1. Install
 
-2. **Create a Supabase project** (the free tier is enough) and apply the schema:
-   paste `supabase/schema.sql` into the SQL editor and run it, or use the
-   Supabase CLI (`supabase db push` against a project linked to this schema).
+```bash
+git clone https://github.com/LorenGrz/OpenRuleta
+cd OpenRuleta
+pnpm install          # once, at the repo root — it's a pnpm workspace
+```
 
-3. **Environment variables** — Next.js loads `.env.local` from each app's own
-   directory. Copy the examples and fill them in:
+### 2. Create the database
 
-   ```bash
-   cp apps/form/.env.example   apps/form/.env.local
-   cp apps/ruleta/.env.example apps/ruleta/.env.local
-   ```
+Create a Supabase project (the free tier is plenty), then apply the schema:
+open **SQL Editor**, paste the contents of [`supabase/schema.sql`](supabase/schema.sql),
+and run it. It creates one table, `public.participants`, plus the row-level
+security policies the two apps rely on.
 
-   | Var                         | form | ruleta | Where                                        |
-   | --------------------------- | :--: | :----: | -------------------------------------------- |
-   | `NEXT_PUBLIC_SUPABASE_URL`  |  ✅  |   ✅   | Supabase → Settings → API → Project URL      |
-   | `SUPABASE_ANON_KEY`         |  ✅  |        | Supabase → Settings → API → `anon`           |
-   | `SUPABASE_SERVICE_ROLE_KEY` |      |   ✅   | Supabase → Settings → API → `service_role`   |
-   | `RULETA_BASIC_AUTH`         |      |  opt.  | You pick — `user:password`, only when hosted |
+### 3. Environment variables
 
-4. **Run**
+Next.js loads `.env.local` from **each app's own directory**. Copy the examples
+and fill them from **Supabase → Project Settings → API**:
 
-   ```bash
-   pnpm dev:form     # http://localhost:3000
-   pnpm dev:ruleta   # http://localhost:3100  (see "Running the wheel" below)
-   ```
+```bash
+cp apps/form/.env.example   apps/form/.env.local
+cp apps/ruleta/.env.example apps/ruleta/.env.local
+```
 
-## Make it yours
+| Var                         | form | ruleta | Value                                      |
+| --------------------------- | :--: | :----: | ------------------------------------------ |
+| `NEXT_PUBLIC_SUPABASE_URL`  |  ✅  |   ✅   | Project URL                                |
+| `SUPABASE_ANON_KEY`         |  ✅  |        | `anon` / publishable key                   |
+| `SUPABASE_SERVICE_ROLE_KEY` |      |   ✅   | `service_role` key (server-side only)      |
+| `RULETA_BASIC_AUTH`         |      |  opt.  | `user:password` — set only when hosting it |
 
-Everything user-facing is in **one file**: `packages/config/src/index.ts`.
-Event name, all copy (English by default — translate it here), the document
-field rules, the sponsor and collaborator lists, wheel timing, confetti and CSV
-settings.
+### 4. Run
 
-Two things live outside it on purpose:
+```bash
+pnpm dev:form     # → http://localhost:3000
+pnpm dev:ruleta   # → http://localhost:3100   (in a second terminal)
+```
 
-- **Colours** — `packages/ui/src/theme.css` (Tailwind v4 `@theme` variables).
-- **Font** — the `next/font/google` import in each app's `src/app/layout.tsx`
-  (it's a compile-time API), plus `--font-sans` in `theme.css`.
+Open the form, sign up a few test people, then open the wheel and spin.
 
-Replace the placeholder art in `apps/*/public/` (`logo.svg`, `icon.svg`,
-`logos/*.svg`, and `apps/ruleta/public/poster.svg`) with your own.
+## Deploying the form for a real event
+
+`apps/form` is the deployable half. On **Vercel**:
+
+1. Import the repo. Set **Root Directory** to `apps/form`.
+2. Add `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_ANON_KEY` as environment
+   variables.
+3. Deploy. `apps/form/vercel.json` registers a daily cron hit to `/api/ping` so
+   the free-tier Supabase project doesn't get paused for inactivity.
+4. Generate a QR code pointing at the deployed URL and put it on a slide.
+
+The anon key can only `INSERT` into `participants` (enforced by RLS in
+`schema.sql`), so it is safe to ship in a public deployment.
+
+During the event, run `apps/ruleta` locally against the **same** Supabase
+project — it picks up new sign-ups automatically (it polls every few seconds).
 
 ## Running the wheel: local or hosted
 
-`apps/ruleta` uses the **service_role key**, which bypasses Row Level Security.
-So its API can read, update and delete every participant — and by default it is
-**not authenticated**. You choose how to run it:
+`apps/ruleta` uses the **service_role key**, which bypasses Row Level Security,
+so its API can read, update and delete every participant. By default it is
+**not authenticated**. You choose:
 
-- **Local (default).** `pnpm dev:ruleta`, or `pnpm --filter @openruleta/ruleta
-build && pnpm --filter @openruleta/ruleta start`. Leave `RULETA_BASIC_AUTH`
-  unset. Nothing is exposed; this is the simplest setup for a draw run from a
-  laptop.
-- **Hosted (Vercel, a VPS, wherever).** Set `RULETA_BASIC_AUTH="user:password"`
-  in the deployment's environment along with the two Supabase vars. A
-  middleware then challenges **every** request — pages and API — with HTTP Basic
-  Auth, so the service_role-backed routes are never open to the public URL. Use
-  a strong password; add your host's rate limiting or IP allow-list on top if
-  you can.
+- **Local (default).** `pnpm dev:ruleta`, or build and `pnpm --filter
+@openruleta/ruleta start`. Leave `RULETA_BASIC_AUTH` unset. Nothing is
+  exposed — simplest for a draw run from a laptop.
+- **Hosted.** Set `RULETA_BASIC_AUTH="user:password"` in the deployment
+  environment (plus the two Supabase vars). `apps/ruleta/src/proxy.ts` then
+  challenges **every** request — pages and API — with HTTP Basic Auth, so the
+  service_role-backed routes are never open on the public URL. Use a strong
+  password; add your host's rate limiting or an IP allow-list on top if you can.
 
-Do not host `apps/ruleta` without `RULETA_BASIC_AUTH` set. `apps/form` is the
-one meant to be public and needs no gate (it can only INSERT).
+Do not host the wheel without `RULETA_BASIC_AUTH` set.
+
+## Make it yours
+
+Everything user-facing lives in **one file**:
+[`packages/config/src/index.ts`](packages/config/src/index.ts). Event name, all
+copy (English by default — translate it there), the ID/document field rules, the
+sponsor and collaborator lists, wheel timing, confetti colours, CSV columns.
+
+Two things sit outside it on purpose:
+
+- **Colours** — `packages/ui/src/theme.css` (Tailwind v4 `@theme` variables).
+- **Font** — the `next/font/google` import in each app's `src/app/layout.tsx`
+  (a compile-time API), plus `--font-sans` in `theme.css`.
+
+Replace the placeholder art in `apps/*/public/` (`logo.svg`, `icon.svg`,
+`logos/*.svg`, and `apps/ruleta/public/poster.svg`) with your own.
 
 ## How the data works
 
 One table, `public.participants`. The form inserts `name` / `email` /
 `doc_last3`; a unique index on `lower(email)` rejects duplicates with a `409`.
 The wheel sets `won_at` and `prize` on winners so they stay excluded across
-draws. `apps/form` also exposes `/api/ping` (a no-op DB round-trip) with a daily
-Vercel cron so Supabase's free tier doesn't pause the project.
+spins; "reset draw" clears them. The wheel resolves a spin against a frozen copy
+of the list, and pauses polling while it spins or a modal is open, so a
+background refresh can't shift the result mid-animation.
 
 ## Commands
 
@@ -115,6 +160,8 @@ pnpm build      ·  pnpm lint  ·  pnpm typecheck  ·  pnpm test
 pnpm format
 ```
 
+`build` / `lint` / `typecheck` / `test` run across every workspace.
+
 ## License
 
-MIT — see `LICENSE`.
+MIT — see [`LICENSE`](LICENSE).

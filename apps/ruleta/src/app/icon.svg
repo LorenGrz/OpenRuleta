@@ -1,8 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="OpenRuleta">
-  <rect width="64" height="64" rx="14" fill="#2563eb"/>
-  <g fill="none" stroke="#ffffff" stroke-width="4">
-    <circle cx="32" cy="32" r="18"/>
-    <path d="M32 14v10M32 40v10M14 32h10M40 32h10"/>
+  <rect width="64" height="64" rx="14" fill="#1e3a8a"/>
+  <g>
+    <path d="M32 32 32 10 A22 22 0 0 1 47.56 16.44 Z" fill="#3b82f6"/>
+    <path d="M32 32 47.56 16.44 A22 22 0 0 1 54 32 Z" fill="#dbeafe"/>
+    <path d="M32 32 54 32 A22 22 0 0 1 47.56 47.56 Z" fill="#3b82f6"/>
+    <path d="M32 32 47.56 47.56 A22 22 0 0 1 32 54 Z" fill="#dbeafe"/>
+    <path d="M32 32 32 54 A22 22 0 0 1 16.44 47.56 Z" fill="#3b82f6"/>
+    <path d="M32 32 16.44 47.56 A22 22 0 0 1 10 32 Z" fill="#dbeafe"/>
+    <path d="M32 32 10 32 A22 22 0 0 1 16.44 16.44 Z" fill="#3b82f6"/>
+    <path d="M32 32 16.44 16.44 A22 22 0 0 1 32 10 Z" fill="#dbeafe"/>
   </g>
-  <circle cx="32" cy="32" r="5" fill="#ffffff"/>
+  <circle cx="32" cy="32" r="6.5" fill="#ffffff"/>
+  <circle cx="32" cy="32" r="2.4" fill="#1e3a8a"/>
+  <path d="M26 4 38 4 32 13 Z" fill="#ffffff"/>
 </svg>

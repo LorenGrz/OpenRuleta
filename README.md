@@ -48,6 +48,25 @@ supabase/
   schema.sql one authoritative schema for both apps
 ```
 
+## Try it with no database
+
+Want to click around first? A fresh clone runs against a local, file-backed
+**mock store** — no Supabase, no `.env` files:
+
+```bash
+pnpm install
+pnpm dev:ruleta   # → http://localhost:3100 — pre-seeded with ~14 people, spin away
+pnpm dev:form     # → http://localhost:3000 — sign someone up; they appear in the wheel
+```
+
+Both apps read the same JSON file (under your OS temp dir), so the whole flow —
+sign-up → wheel → winner → CSV export → reset — works offline. `pnpm mock:reset`
+wipes it back to the seed data.
+
+The mock activates automatically whenever `NEXT_PUBLIC_SUPABASE_URL` is unset.
+Force it either way with `OPENRULETA_MOCK_DB=1` (always mock) or `=0` (always
+require Supabase). It's a dev aid only — for a real event, set up Supabase below.
+
 ## Setup
 
 You need Node 20+, [pnpm](https://pnpm.io) 9+, and a Supabase project.
@@ -155,7 +174,7 @@ background refresh can't shift the result mid-animation.
 ## Commands
 
 ```bash
-pnpm dev:form   ·  pnpm dev:ruleta
+pnpm dev:form   ·  pnpm dev:ruleta   ·  pnpm mock:reset
 pnpm build      ·  pnpm lint  ·  pnpm typecheck  ·  pnpm test
 pnpm format
 ```

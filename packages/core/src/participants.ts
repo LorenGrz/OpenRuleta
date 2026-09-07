@@ -1,3 +1,4 @@
+import { isMockDb } from "./mock-db.ts";
 import { getSupabaseClient } from "./supabase.ts";
 import { isTransientDbError, withRetry } from "./retry.ts";
 import {
@@ -39,12 +40,37 @@ function cleanPrize(prize: string | null | undefined): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+/**
+ * Loads the file-backed mock store on demand. Kept as a dynamic import so
+ * `node:fs` never lands in a deployed serverless bundle — production runs with
+ * Supabase configured and never reaches this.
+ */
+function loadMockStore(): Promise<typeof import("./mock-store.ts")> {
+  return import("./mock-store.ts");
+}
+
 // ── Public form ────────────────────────────────────────────────────────────
 
 /** Inserts a participant. Uses the anon key (INSERT-only under RLS). */
 export async function addParticipant(
   input: ParticipantInput,
 ): Promise<Participant> {
+  if (isMockDb()) {
+    try {
+      (await loadMockStore()).mockAddParticipant(input);
+    } catch (err) {
+      if (isUniqueViolation(err)) throw new DuplicateParticipantError();
+      throw err;
+    }
+    return {
+      id: "",
+      name: input.name,
+      email: input.email,
+      docLast3: input.docLast3,
+      createdAt: new Date().toISOString(),
+    };
+  }
+
   const supabase = getSupabaseClient(false);
 
   try {
@@ -81,6 +107,12 @@ export async function addParticipant(
 // ── Wheel app (service_role, local only) ───────────────────────────────────
 
 export async function listParticipants(): Promise<WinnerParticipant[]> {
+  if (isMockDb()) {
+    return (await loadMockStore())
+      .mockListParticipants()
+      .map(toWinnerParticipant);
+  }
+
   const supabase = getSupabaseClient(true);
   const { data, error } = await supabase
     .from("participants")
@@ -97,6 +129,12 @@ export async function markWinner(
   id: string,
   prize?: string | null,
 ): Promise<WinnerParticipant> {
+  if (isMockDb()) {
+    const row = (await loadMockStore()).mockMarkWinner(id, prize ?? null);
+    if (!row) throw new ParticipantNotFoundError();
+    return toWinnerParticipant(row);
+  }
+
   const supabase = getSupabaseClient(true);
   const { data, error } = await supabase
     .from("participants")
@@ -122,6 +160,8 @@ export async function markWinner(
 
 /** Undo a single winner — puts them back in the pool and clears the prize. */
 export async function unmarkWinner(id: string): Promise<void> {
+  if (isMockDb()) return (await loadMockStore()).mockUnmarkWinner(id);
+
   const supabase = getSupabaseClient(true);
   const { error } = await supabase
     .from("participants")
@@ -135,6 +175,8 @@ export async function setPrize(
   id: string,
   prize: string | null,
 ): Promise<void> {
+  if (isMockDb()) return (await loadMockStore()).mockSetPrize(id, prize);
+
   const supabase = getSupabaseClient(true);
   const { error } = await supabase
     .from("participants")
@@ -145,6 +187,8 @@ export async function setPrize(
 
 /** Deletes one participant. Irreversible. */
 export async function deleteParticipant(id: string): Promise<void> {
+  if (isMockDb()) return (await loadMockStore()).mockDeleteParticipant(id);
+
   const supabase = getSupabaseClient(true);
   const { error } = await supabase.from("participants").delete().eq("id", id);
   if (error) throw error;
@@ -152,6 +196,8 @@ export async function deleteParticipant(id: string): Promise<void> {
 
 /** Wipes every participant. Irreversible. Returns how many were removed. */
 export async function deleteAllParticipants(): Promise<number> {
+  if (isMockDb()) return (await loadMockStore()).mockDeleteAllParticipants();
+
   const supabase = getSupabaseClient(true);
   const { error, count } = await supabase
     .from("participants")
@@ -163,6 +209,8 @@ export async function deleteAllParticipants(): Promise<number> {
 
 /** Clears every winner mark and prize — everyone back in the pool. */
 export async function resetWinners(): Promise<void> {
+  if (isMockDb()) return (await loadMockStore()).mockResetWinners();
+
   const supabase = getSupabaseClient(true);
   const { error } = await supabase
     .from("participants")
@@ -173,6 +221,8 @@ export async function resetWinners(): Promise<void> {
 
 /** Cheap DB round-trip for the keep-alive route. */
 export async function ping(): Promise<void> {
+  if (isMockDb()) return;
+
   const supabase = getSupabaseClient(false);
   const { error } = await supabase.rpc("app_ping");
   if (error) throw error;

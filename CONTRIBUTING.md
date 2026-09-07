@@ -14,7 +14,9 @@ pnpm typecheck && pnpm lint && pnpm test
 - `packages/config` — branding, copy, event data. No logic.
 - `packages/core` — framework-agnostic TypeScript: types, validation, the
   Supabase client factory, DB operations, retry helper. Has unit tests
-  (`pnpm --filter @openruleta/core test`).
+  (`pnpm --filter @openruleta/core test`). `mock-store.ts` is a file-backed
+  fallback used when no Supabase is configured; it is lazily imported so its
+  `node:fs` use never reaches a deployed bundle.
 - `packages/ui` — shared React components and the Tailwind theme file. No
   dependency on `config`.
 - `apps/form`, `apps/ruleta` — the two Next.js apps. They depend on all three

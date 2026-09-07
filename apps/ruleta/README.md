@@ -3,10 +3,13 @@
 Winner-picker wheel. Reads the participants that `@openruleta/form` collected
 from the **same Supabase project** and draws winners.
 
-> ⚠️ **Run this locally only.** It uses `SUPABASE_SERVICE_ROLE_KEY`, which
-> bypasses Row Level Security. None of the route handlers are authenticated
-> (including `DELETE /api/participants { all: true }`), which is fine for a tool
-> on your own machine and unsafe anywhere public. Do not deploy it.
+> ⚠️ **Built to run locally.** It uses `SUPABASE_SERVICE_ROLE_KEY`, which
+> bypasses Row Level Security, and its route handlers (including
+> `DELETE /api/participants { all: true }`) are otherwise unauthenticated —
+> fine on your own machine, unsafe on an open URL. If you must host it, set
+> `RULETA_BASIC_AUTH` so `src/proxy.ts` gates every request; never deploy it
+> without that. See the repo root `README.md` → **Running the wheel: local or
+> hosted**.
 
 ## What it does
 
@@ -39,6 +42,10 @@ from the **same Supabase project** and draws winners.
 | --------------------------- | ------------------------------------------ |
 | `NEXT_PUBLIC_SUPABASE_URL`  | Supabase → Settings → API → Project URL    |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API → `service_role` |
+
+With no Supabase vars set, the wheel reads from a local file-backed mock store
+(pre-seeded, shared with `apps/form`). See the repo root `README.md` →
+**Try it with no database**.
 
 ## Run
 

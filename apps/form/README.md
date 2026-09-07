@@ -22,6 +22,10 @@ restricts to `INSERT` only. Safe to deploy publicly (Vercel, etc.).
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Settings → API → Project URL          |
 | `SUPABASE_ANON_KEY`        | Supabase → Settings → API → `anon` / publishable |
 
+With no Supabase vars set, the form writes to a local file-backed mock store
+instead (shared with `apps/ruleta`). See the repo root `README.md` →
+**Try it with no database**.
+
 ## Scripts
 
 ```bash

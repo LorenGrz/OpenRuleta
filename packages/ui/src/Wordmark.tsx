@@ -5,13 +5,13 @@ type Props = {
   className?: string;
 };
 
-/** Header logo. `src` points at a file in the app's `public/` dir. */
+/**
+ * Header logo. `src` points at a file in the app's `public/` dir.
+ *
+ * The image is shown as-is, with no card behind it: each app ships a `logo.svg`
+ * toned for its own background (dark on the form's white card, light on the
+ * wheel's near-black header).
+ */
 export function Wordmark({ src, alt, className = "h-12" }: Props) {
-  return (
-    <img
-      src={src}
-      alt={alt}
-      className={`w-auto rounded-xl bg-white p-2 shadow-sm ${className}`}
-    />
-  );
+  return <img src={src} alt={alt} className={`w-auto ${className}`} />;
 }

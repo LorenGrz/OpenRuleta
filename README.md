@@ -106,8 +106,8 @@ cp apps/ruleta/.env.example apps/ruleta/.env.local
 ### 4. Run
 
 ```bash
-pnpm dev:form     # → http://localhost:3000
-pnpm dev:ruleta   # → http://localhost:3100   (in a second terminal)
+pnpm dev          # → form on http://localhost:3000 + wheel on http://localhost:3100
+# or one at a time: pnpm dev:form / pnpm dev:ruleta
 ```
 
 Open the form, sign up a few test people, then open the wheel and spin.
@@ -121,7 +121,11 @@ Open the form, sign up a few test people, then open the wheel and spin.
    variables.
 3. Deploy. `apps/form/vercel.json` registers a daily cron hit to `/api/ping` so
    the free-tier Supabase project doesn't get paused for inactivity.
-4. Generate a QR code pointing at the deployed URL and put it on a slide.
+4. Generate the projector poster: `pnpm poster <deployed-url>`. It renders a
+   landscape 1920x1080 poster (logo, headline, sponsors, big QR) straight into
+   `apps/ruleta/public/poster.png`; set `assets.poster: "/poster.png"` in config.
+   The wheel's "Show QR" button projects it full-screen. Poster text, colours
+   and font live in `siteConfig.poster`.
 
 The anon key can only `INSERT` into `participants` (enforced by RLS in
 `schema.sql`), so it is safe to ship in a public deployment.
@@ -160,7 +164,9 @@ Two things sit outside it on purpose:
   (a compile-time API), plus `--font-sans` in `theme.css`.
 
 Replace the placeholder art in `apps/*/public/` (`logo.svg`, `icon.svg`,
-`logos/*.svg`, and `apps/ruleta/public/poster.svg`) with your own.
+`logos/*.svg`). The QR poster is generated, not hand-made: `pnpm poster <url>`
+writes `apps/ruleta/public/poster.png`, which supersedes the
+`poster.svg` placeholder (see [AGENTS.md](AGENTS.md#qr-poster)).
 
 ## How the data works
 
@@ -174,7 +180,8 @@ background refresh can't shift the result mid-animation.
 ## Commands
 
 ```bash
-pnpm dev:form   ·  pnpm dev:ruleta   ·  pnpm mock:reset
+pnpm dev  ·  pnpm dev:form  ·  pnpm dev:ruleta  ·  pnpm mock:reset
+pnpm poster <form-url>
 pnpm build      ·  pnpm lint  ·  pnpm typecheck  ·  pnpm test
 pnpm format
 ```

@@ -40,6 +40,33 @@ export type DocFieldConfig = {
   maskGlyph: string;
 };
 
+/**
+ * Landscape 1920x1080 QR poster rendered by `pnpm poster <form-url>`
+ * (apps/form/scripts/poster.mjs) and projected full-screen by the wheel's
+ * "Show QR" button. Logo and sponsor chips come from `assets.logo` /
+ * `sponsors[]`; everything else on the poster is configured here.
+ */
+export type PosterConfig = {
+  /** Big headline. Use `\n` for a line break. */
+  title: string;
+  /** Uppercase line under the headline (e.g. the event name). */
+  subtitle: string;
+  /** Short line under the QR code, inside the white card. */
+  hint: string;
+  /** Label above the sponsor chips. */
+  supportLabel: string;
+  /** CSS `background` value for the whole poster (colour, gradients…). */
+  background: string;
+  /** Dark text colour used on white surfaces (QR hint, name-only chips). */
+  ink: string;
+  /** Accent colour: the URL pill and the glow around the QR card. */
+  accent: string;
+  /** Google Fonts family name, loaded by the poster page. Default "Montserrat". */
+  font?: string;
+  /** Put the logo on a white card (for dark logos on a dark background). Default true. */
+  logoCard?: boolean;
+};
+
 export type SiteConfig = {
   /** Product / event name. */
   name: string;
@@ -58,6 +85,9 @@ export type SiteConfig = {
     /** Full-screen image the ruleta projects behind "Show QR". */
     poster: string;
   };
+
+  /** Generated QR poster — see {@link PosterConfig}. */
+  poster: PosterConfig;
 
   form: {
     meta: {
@@ -210,6 +240,19 @@ export const siteConfig = defineSiteConfig({
     logo: "/logo.svg",
     wheelLogo: "/logos/wheel-logo.svg",
     poster: "/poster.svg",
+  },
+
+  poster: {
+    title: "SCAN THE QR\nTO ENTER",
+    subtitle: "OpenRuleta",
+    hint: "Point your phone camera at it",
+    supportLabel: "WITH SUPPORT FROM",
+    background:
+      "radial-gradient(1100px 640px at 25% -10%, rgba(255,255,255,.16), transparent 60%), linear-gradient(160deg, #2563eb 0%, #1e3a8a 100%)",
+    ink: "#0b3b73",
+    accent: "rgba(255,255,255,.14)",
+    font: "Montserrat",
+    logoCard: true,
   },
 
   form: {

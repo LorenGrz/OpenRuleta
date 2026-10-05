@@ -46,3 +46,4 @@ apps/*/CLAUDE.md
 **/qr.svg
 **/poster-*.png
 scripts/*.html
+**/scripts/.poster.html

@@ -22,8 +22,8 @@ can verify visual changes before touching Supabase:
 
 ```bash
 pnpm install
-pnpm dev:form     # http://localhost:3000
-pnpm dev:ruleta   # http://localhost:3100  (second terminal)
+pnpm dev          # form on http://localhost:3000 + ruleta on http://localhost:3100
+                  # (or one at a time: pnpm dev:form / pnpm dev:ruleta)
 ```
 
 ## Customizing for an event
@@ -38,6 +38,10 @@ type-checked. What lives here:
 - `name`, `slug` (namespaces `localStorage` — change it per deployment), `lang`,
   `locale`.
 - `assets.{logo,wheelLogo,poster}` — **paths** into each app's `public/` (see §3).
+- `poster.*` — the generated QR poster (see [QR poster](#qr-poster)): `title`
+  (`\n` = line break), `subtitle`, `hint`, `supportLabel`, `background` (any CSS
+  `background` value), `ink` (dark text on white), `accent` (URL pill + QR card
+  glow), optional `font` (Google Fonts family) and `logoCard`.
 - `form.meta.*` — `<title>`, description, Open Graph.
 - `form.messages.*` — every string the form renders, including validation and
   server errors. Default language is English; translate in place.
@@ -84,7 +88,7 @@ Replace the placeholder SVGs. The `assets.*` and `sponsors[].src` /
 | ---------------------------------------- | ---------------------------- | -------------------------------------------------- |
 | `assets.logo`                            | `apps/form/public/logo.svg`  | `apps/ruleta/public/logo.svg`                      |
 | `assets.wheelLogo`                       | —                            | `apps/ruleta/public/logos/wheel-logo.svg`          |
-| `assets.poster`                          | —                            | `apps/ruleta/public/poster.svg`                    |
+| `assets.poster`                          | —                            | `apps/ruleta/public/poster.png` (generated)        |
 | `sponsors[].src` / `collaborators[].src` | `apps/form/public/logos/*`   | `apps/ruleta/public/logos/*` (only if shown there) |
 | favicon                                  | `apps/form/src/app/icon.svg` | `apps/ruleta/src/app/icon.svg` (if present)        |
 
@@ -103,8 +107,27 @@ Replace the placeholder SVGs. The `assets.*` and `sponsors[].src` /
 4. Drop real SVGs into `apps/form/public/` and `apps/ruleta/public/` per the table
    above. Remove unused `placeholder-*.svg`.
 5. `pnpm typecheck && pnpm lint && pnpm test && pnpm build` — all must pass.
-6. `pnpm dev:form` + `pnpm dev:ruleta` (mock DB, no `.env` needed) and eyeball
-   both apps.
+6. `pnpm dev` (mock DB, no `.env` needed) and eyeball both apps.
+
+## QR poster
+
+The wheel's "Show QR" button projects `assets.poster` **full-screen**
+(`apps/ruleta/src/components/QrOverlay.tsx`: `h-full w-full object-contain`, Esc
+or click closes). The poster is **landscape 1920x1080** so it fills a 16:9
+projector edge to edge: left column = logo, headline, subtitle, sponsor chips
+(fits ~12); right column = high-error-correction QR on a white card + the form
+host in a pill.
+
+```bash
+pnpm poster https://your-form.vercel.app
+```
+
+writes straight to `apps/ruleta/public/poster.png` (rendered with headless
+Chrome/Chromium/Brave; without one it leaves `apps/form/scripts/.poster.html`
+to export by hand). Then set `assets.poster: "/poster.png"` and commit the PNG
+in the fork. All text, colours and the font come from `siteConfig.poster` — a
+fork never edits the script. The template ships `apps/ruleta/public/poster.svg`
+as a placeholder (and keeps `assets.poster: "/poster.svg"`).
 
 ## Database (Supabase)
 
@@ -140,8 +163,9 @@ with `OPENRULETA_MOCK_DB=1` (always mock) / `=0` (always require Supabase).
 2. Env vars: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_ANON_KEY`.
 3. Deploy. `apps/form/vercel.json` registers a daily cron to `/api/ping` so the
    free-tier Supabase project isn't paused for inactivity.
-4. Make a QR code for the deployed URL (`pnpm --filter @openruleta/form qr <url>`)
-   and put it on a slide.
+4. Generate the projector poster for the deployed URL: `pnpm poster <url>` (see
+   [QR poster](#qr-poster)). A bare QR is also available via
+   `pnpm --filter @openruleta/form qr <url>`.
 
 The anon key is `INSERT`-only under RLS — safe to ship publicly.
 
@@ -157,6 +181,22 @@ Uses the **service_role key** and its API routes (incl.
 - **Hosted.** Set `RULETA_BASIC_AUTH="user:password"` (plus the two Supabase
   vars). `apps/ruleta/src/proxy.ts` then challenges every request — pages and API.
   **Never host it without that.** Add host rate-limiting / IP allow-list on top.
+
+## New event fork — checklist
+
+1. Clone the template into a new dir: `git clone <OpenRuleta-url> myconf-ruleta`.
+2. `gh repo create <owner>/myconf-ruleta --private`, then
+   `git remote set-url origin <new-repo-url>` and push.
+3. Customize — §1 config (incl. `poster.*`), §2 theme, §3 assets.
+4. Supabase: new project → run `supabase/schema.sql` in the SQL Editor.
+5. Vercel: `pnpm dlx vercel link` → **Root Directory** `apps/form`, function
+   region `gru1` (or the one closest to the Supabase project), env
+   `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_ANON_KEY` → deploy.
+6. `pnpm poster <deployed-url>` → set `assets.poster: "/poster.png"` → commit.
+7. Event day: run the ruleta locally with `apps/ruleta/.env.local` holding
+   `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`.
+8. After the event: export winners (CSV), then **pause** the Supabase project
+   and the Vercel project.
 
 ## Guardrails
 

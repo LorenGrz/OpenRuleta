@@ -17,14 +17,11 @@ export function QrOverlay({ onClose }: { onClose: () => void }) {
   }, [onClose]);
 
   return (
-    <div
-      onClick={onClose}
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black p-6"
-    >
+    <div onClick={onClose} className="fixed inset-0 z-[200] bg-black">
       <img
         src={siteConfig.assets.poster}
         alt={m.posterAlt}
-        className="max-h-full max-w-full object-contain"
+        className="h-full w-full object-contain"
       />
       <button
         onClick={onClose}

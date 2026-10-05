@@ -6,8 +6,10 @@
   "license": "MIT",
   "packageManager": "pnpm@11.24.0",
   "scripts": {
+    "dev": "pnpm --parallel --filter @openruleta/form --filter @openruleta/ruleta dev",
     "dev:form": "pnpm --filter @openruleta/form dev",
-    "dev:ruleta": "pnpm --filter @openruleta/ruleta dev -p 3100",
+    "dev:ruleta": "pnpm --filter @openruleta/ruleta dev",
+    "poster": "pnpm --filter @openruleta/form poster",
     "mock:reset": "node scripts/reset-mock-db.mjs",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",

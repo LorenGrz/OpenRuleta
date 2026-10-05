@@ -1,17 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1600" role="img" aria-label="Raffle poster placeholder">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" role="img" aria-label="Raffle poster placeholder">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#2563eb"/>
       <stop offset="1" stop-color="#1e3a8a"/>
     </linearGradient>
   </defs>
-  <rect width="1080" height="1600" fill="url(#bg)"/>
-  <rect x="290" y="470" width="500" height="500" rx="32" fill="#ffffff"/>
-  <g fill="none" stroke="#cbd5e1" stroke-width="10">
-    <rect x="360" y="540" width="360" height="360" rx="16"/>
-    <path d="M360 720h360M540 540v360"/>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <g font-family="Montserrat, Arial, sans-serif" fill="#ffffff">
+    <text x="96" y="400" font-size="108" font-weight="800">SCAN THE QR</text>
+    <text x="96" y="510" font-size="108" font-weight="800">TO ENTER</text>
+    <text x="96" y="600" font-size="32" font-weight="600" letter-spacing="4" opacity="0.82">OPENRULETA</text>
+    <text x="96" y="760" font-size="30" font-weight="600" opacity="0.85">Replace public/poster.svg with your event's QR poster</text>
+    <text x="96" y="810" font-size="26" font-weight="600" opacity="0.6">pnpm poster &lt;form-url&gt;  →  apps/ruleta/public/poster.png</text>
+    <text x="96" y="852" font-size="26" font-weight="600" opacity="0.6">then set siteConfig.assets.poster to "/poster.png"</text>
   </g>
-  <text x="540" y="360" font-family="Montserrat, Arial, sans-serif" font-size="72" font-weight="800" fill="#ffffff" text-anchor="middle">SCAN THE QR</text>
-  <text x="540" y="1090" font-family="Montserrat, Arial, sans-serif" font-size="30" font-weight="600" fill="#ffffff" text-anchor="middle" opacity="0.85">Replace public/poster.svg with your event's QR poster</text>
-  <text x="540" y="1140" font-family="Montserrat, Arial, sans-serif" font-size="26" font-weight="600" fill="#ffffff" text-anchor="middle" opacity="0.6">e.g. pnpm --filter @openruleta/form poster &lt;url&gt;</text>
+  <rect x="980" y="60" width="844" height="876" rx="44" fill="#ffffff"/>
+  <g fill="none" stroke="#cbd5e1" stroke-width="12">
+    <rect x="1072" y="152" width="660" height="660" rx="20"/>
+    <path d="M1072 482h660M1402 152v660"/>
+  </g>
+  <text x="1402" y="900" font-family="Montserrat, Arial, sans-serif" font-size="26" font-weight="600" fill="#0b3b73" text-anchor="middle">Point your phone camera at it</text>
+  <rect x="1222" y="962" width="360" height="60" rx="30" fill="#ffffff" fill-opacity="0.14"/>
+  <text x="1402" y="1003" font-family="Montserrat, Arial, sans-serif" font-size="28" font-weight="700" fill="#ffffff" text-anchor="middle">your-form.example</text>
 </svg>

@@ -39,3 +39,26 @@ test("toCsv: neutralizes values that start with = + - @ to block formula injecti
   );
   assert.equal(csv, "﻿name\n'=cmd()\n'+1\n'-1\n'@mention\nsafe\n");
 });
+
+test("toCsv: quotes and neutralizes a formula trigger that follows a bare \\r", () => {
+  // Security case (I1): a lone `\r` used to leave the cell unquoted (the
+  // quote guard only matched `,`/`\n`) and the formula guard only checked
+  // index 0, so "a\r=1+1" slipped through both checks unescaped.
+  const csv = toCsv(["name"], [["a\r=1+1"]]);
+  assert.equal(csv, `﻿name\n"a\r'=1+1"\n`);
+});
+
+test("toCsv: quotes and neutralizes a formula trigger that follows an embedded \\n", () => {
+  // Security case (I1): a naive line-based reader that ignores CSV quoting
+  // would see "@SUM(1)" as the start of its own field once split on `\n`.
+  const csv = toCsv(["name"], [["a\n@SUM(1)"]]);
+  assert.equal(csv, `﻿name\n"a\n'@SUM(1)"\n`);
+});
+
+test("toCsv: neutralizes a cell that starts with a tab", () => {
+  // Edge case (I1): spreadsheet apps skip a leading tab before deciding a
+  // cell is a formula, so "\t=1+1" must be guarded even though a tab is not
+  // one of the original = + - @ prefixes.
+  const csv = toCsv(["name"], [["\t=1+1"]]);
+  assert.equal(csv, "﻿name\n'\t=1+1\n");
+});

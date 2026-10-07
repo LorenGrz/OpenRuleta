@@ -22,12 +22,16 @@ create table if not exists public.participants (
   -- Persistent: a winner stays excluded across draws and machines.
   won_at     timestamptz,
   -- Prize assigned when the winner is confirmed (written by the wheel app).
-  prize      text
+  prize      text,
+  -- Last time the wheel app (re)sent the winner email. null = never notified.
+  -- Only ever set on winners; cleared together with won_at.
+  notified_at timestamptz
 );
 
 -- Older databases: make sure the added columns exist.
 alter table public.participants add column if not exists won_at timestamptz;
 alter table public.participants add column if not exists prize  text;
+alter table public.participants add column if not exists notified_at timestamptz;
 
 -- One entry per email address (case-insensitive). This unique index is what
 -- raises SQLSTATE 23505 -> the form route answers 409.

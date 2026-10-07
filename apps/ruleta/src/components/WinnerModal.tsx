@@ -12,6 +12,16 @@ const m = siteConfig.ruleta.messages;
 const doc = siteConfig.form.docField;
 const confettiColors = siteConfig.ruleta.confettiColors;
 
+const FOCUS_RING =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
+
+function timeLabel(iso: string): string {
+  return new Date(iso).toLocaleTimeString(siteConfig.locale, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 type Props = {
   winner: Participant;
   busy?: boolean;
@@ -19,6 +29,10 @@ type Props = {
   defaultPrize?: string;
   onConfirm: (prize: string) => void;
   onSpinAgain: () => void;
+  /** Shown once confirmed (`winner.wonAt` set): opens the email preview. */
+  onNotify?: () => void;
+  /** Shown once confirmed: closes the modal. */
+  onClose?: () => void;
 };
 
 export function WinnerModal({
@@ -27,8 +41,13 @@ export function WinnerModal({
   defaultPrize,
   onConfirm,
   onSpinAgain,
+  onNotify,
+  onClose,
 }: Props) {
   const [prize, setPrize] = useState(winner.prize ?? defaultPrize ?? "");
+  // The parent swaps in the stored row after confirming, so wonAt flips the
+  // modal to its post-confirm step (prize + notify) without remounting.
+  const confirmed = Boolean(winner.wonAt);
 
   useEffect(() => {
     const end = Date.now() + 1200;
@@ -67,38 +86,80 @@ export function WinnerModal({
             </p>
           )}
         </div>
-        <label className="mb-4 block text-left">
-          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-white/40">
-            {m.prizeLabel}
-          </span>
-          <input
-            type="text"
-            value={prize}
-            onChange={(e) => setPrize(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !busy) onConfirm(prize);
-            }}
-            placeholder={m.prizePlaceholder}
-            autoFocus
-            className="w-full rounded-lg border border-white/15 bg-[#151515] px-3 py-2 text-sm text-white outline-none transition focus:border-primary"
-          />
-        </label>
-        <div className="flex flex-col gap-3">
-          <button
-            onClick={() => onConfirm(prize)}
-            disabled={busy}
-            className="w-full rounded-lg bg-primary py-3 font-semibold text-white transition hover:bg-primary-hover disabled:opacity-50"
-          >
-            {busy ? m.saving : m.confirmWinner}
-          </button>
-          <button
-            onClick={onSpinAgain}
-            disabled={busy}
-            className="w-full rounded-lg border border-white/20 py-3 font-semibold text-white/80 transition hover:bg-white/5 disabled:opacity-50"
-          >
-            {m.spinAgain}
-          </button>
-        </div>
+        {confirmed ? (
+          <div className="flex flex-col gap-3">
+            <p role="status" className="text-sm font-semibold text-green-400">
+              {m.winnerConfirmed}
+            </p>
+            {winner.prize && (
+              <p className="text-sm text-white/80">🎁 {winner.prize}</p>
+            )}
+            {winner.notifiedAt && (
+              <p className="text-xs text-white/50">
+                <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-green-400 ring-1 ring-inset ring-green-500/20">
+                  <time dateTime={winner.notifiedAt}>
+                    {m.notifiedBadge.replace(
+                      "{time}",
+                      timeLabel(winner.notifiedAt),
+                    )}
+                  </time>
+                </span>
+              </p>
+            )}
+            {onNotify && (
+              <button
+                onClick={onNotify}
+                autoFocus
+                className={`w-full rounded-lg bg-primary py-3 font-semibold text-white transition hover:bg-primary-hover ${FOCUS_RING}`}
+              >
+                {winner.notifiedAt ? m.resendEmail : m.notifyByEmail}
+              </button>
+            )}
+            {onClose && (
+              <button
+                onClick={onClose}
+                className={`w-full rounded-lg border border-white/20 py-3 font-semibold text-white/80 transition hover:bg-white/5 ${FOCUS_RING}`}
+              >
+                {m.done}
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            <label className="mb-4 block text-left">
+              <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-white/40">
+                {m.prizeLabel}
+              </span>
+              <input
+                type="text"
+                value={prize}
+                onChange={(e) => setPrize(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !busy) onConfirm(prize);
+                }}
+                placeholder={m.prizePlaceholder}
+                autoFocus
+                className="w-full rounded-lg border border-white/15 bg-[#151515] px-3 py-2 text-sm text-white outline-none transition focus:border-primary"
+              />
+            </label>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => onConfirm(prize)}
+                disabled={busy}
+                className="w-full rounded-lg bg-primary py-3 font-semibold text-white transition hover:bg-primary-hover disabled:opacity-50"
+              >
+                {busy ? m.saving : m.confirmWinner}
+              </button>
+              <button
+                onClick={onSpinAgain}
+                disabled={busy}
+                className="w-full rounded-lg border border-white/20 py-3 font-semibold text-white/80 transition hover:bg-white/5 disabled:opacity-50"
+              >
+                {m.spinAgain}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

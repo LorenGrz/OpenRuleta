@@ -8,6 +8,7 @@ import { Wordmark } from "@openruleta/ui";
 import { CollaboratorCarousel } from "@/components/CollaboratorCarousel";
 import { EditableTitle, useRaffleTitle } from "@/components/EditableTitle";
 import { HeaderMenu } from "@/components/HeaderMenu";
+import { EmailPreviewModal } from "@/components/EmailPreviewModal";
 import { ParticipantsPanel } from "@/components/ParticipantsPanel";
 import { QrOverlay } from "@/components/QrOverlay";
 import { SponsorCarousel } from "@/components/SponsorCarousel";
@@ -16,6 +17,7 @@ import { WinnerModal } from "@/components/WinnerModal";
 import { WinnersModal } from "@/components/WinnersModal";
 import { downloadCsv, toCsv } from "@/lib/csv";
 import { playSpinTicks } from "@/lib/spinSound";
+import { useWinnerNotification } from "@/lib/useWinnerNotification";
 import {
   confirmWinner as confirmWinnerApi,
   deleteAllParticipants as deleteAllApi,
@@ -151,6 +153,17 @@ export function RuletaClient() {
     applyList(data.participants);
   }, [applyList]);
 
+  // Winner email (simulated): keep the open winner modal and the list fresh.
+  const notification = useWinnerNotification({
+    onNotified: useCallback(
+      (id: string, notifiedAt: string) => {
+        setModalWinner((w) => (w && w.id === id ? { ...w, notifiedAt } : w));
+        reload().catch(() => setLoadError(m.loadFailed));
+      },
+      [reload],
+    ),
+  });
+
   // Initial fetch + auto-poll. setState only inside promise callbacks; polling
   // pauses while spinning, a modal is open, or a write is in flight.
   useEffect(() => {
@@ -220,9 +233,10 @@ export function RuletaClient() {
     setBusy(true);
     setLoadError(null);
     try {
-      await confirmWinnerApi(modalWinner.id, prize);
+      const confirmed = await confirmWinnerApi(modalWinner.id, prize);
       await reload();
-      setModalWinner(null);
+      // Keep the modal open on its post-confirm step (notify by email).
+      setModalWinner(confirmed);
     } catch {
       setLoadError(m.confirmFailed);
     } finally {
@@ -434,6 +448,8 @@ export function RuletaClient() {
           defaultPrize={raffleTitle}
           onConfirm={confirmWinner}
           onSpinAgain={removeAndReopen}
+          onNotify={() => notification.notify(modalWinner)}
+          onClose={() => setModalWinner(null)}
         />
       )}
 
@@ -445,6 +461,18 @@ export function RuletaClient() {
           onExportCsv={() => downloadWinnersCsv(winners)}
           onUndo={undoWinner}
           onEditPrize={editPrize}
+          onNotify={notification.notify}
+        />
+      )}
+
+      {notification.state.status !== "idle" && (
+        <EmailPreviewModal
+          state={notification.state}
+          onClose={notification.close}
+          onRetry={() =>
+            notification.state.status !== "idle" &&
+            notification.notify(notification.state.participant)
+          }
         />
       )}
 

@@ -67,6 +67,18 @@ export type PosterConfig = {
   logoCard?: boolean;
 };
 
+/**
+ * Winner email (simulated — OpenRuleta sends nothing). `{name}` and `{prize}`
+ * are substituted in `subject` and `body`; `body` is plain text, blank lines
+ * become paragraphs in the HTML preview.
+ */
+export type WinnerEmailConfig = {
+  /** "Display Name <address>" or a bare address. */
+  from: string;
+  subject: string;
+  body: string;
+};
+
 export type SiteConfig = {
   /** Product / event name. */
   name: string;
@@ -158,6 +170,8 @@ export type SiteConfig = {
       /** Columns for the "export all participants" CSV (incl. winners). */
       participantsHeaders: [string, string, string, string, string, string];
     };
+    /** Winner email — see {@link WinnerEmailConfig}. */
+    email: WinnerEmailConfig;
     messages: {
       sponsorsLabel: string;
       collaboratorsLabel: string;
@@ -227,6 +241,28 @@ export type SiteConfig = {
       prizeRouteFailed: string;
       undoRouteFailed: string;
       resetRouteFailed: string;
+      /** Winner email (simulated). {name} / {time} / {action} are substituted. */
+      notifyByEmail: string;
+      notifyAriaLabel: string;
+      resendEmail: string;
+      notifiedBadge: string;
+      winnerConfirmed: string;
+      done: string;
+      emailPreviewHeading: string;
+      emailTo: string;
+      emailFrom: string;
+      emailSubject: string;
+      emailBody: string;
+      emailMessageId: string;
+      emailSending: string;
+      emailSent: string;
+      emailSimulatedNote: string;
+      notifyFailed: string;
+      retry: string;
+      /** Notify route-handler error bodies. */
+      notifyNotWinner: string;
+      notifyNoPrize: string;
+      notifyRouteFailed: string;
     };
   };
 
@@ -343,6 +379,11 @@ export const siteConfig = defineSiteConfig({
         "prize",
       ],
     },
+    email: {
+      from: "OpenRuleta <no-reply@example.com>",
+      subject: "You won {prize}!",
+      body: "Hi {name},\n\nCongratulations! You won the prize {prize} in the OpenRuleta raffle draw.\n\nWe will contact you soon with the details to collect it.\n\nThe OpenRuleta team",
+    },
     messages: {
       sponsorsLabel: "Sponsors",
       collaboratorsLabel: "Collaborators",
@@ -410,6 +451,27 @@ export const siteConfig = defineSiteConfig({
       prizeRouteFailed: "Could not save the prize.",
       undoRouteFailed: "Could not undo.",
       resetRouteFailed: "Could not reset.",
+      notifyByEmail: "Notify by email",
+      notifyAriaLabel: "{action}: {name}",
+      resendEmail: "Resend email",
+      notifiedBadge: "Notified {time}",
+      winnerConfirmed: "Winner confirmed ✓",
+      done: "Done",
+      emailPreviewHeading: "Winner email",
+      emailTo: "To",
+      emailFrom: "From",
+      emailSubject: "Subject",
+      emailBody: "Body",
+      emailMessageId: "Message ID",
+      emailSending: "Sending…",
+      emailSent: "Sent (simulated) ✓",
+      emailSimulatedNote:
+        "Simulation: no email was actually sent. This is a preview of what the winner would receive.",
+      notifyFailed: "Could not send the email. Try again.",
+      retry: "Try again",
+      notifyNotWinner: "This participant has not won.",
+      notifyNoPrize: "Assign a prize before notifying the winner.",
+      notifyRouteFailed: "Could not send the email.",
     },
   },
 

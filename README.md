@@ -173,7 +173,9 @@ writes `apps/ruleta/public/poster.png`, which supersedes the
 One table, `public.participants`. The form inserts `name` / `email` /
 `doc_last3`; a unique index on `lower(email)` rejects duplicates with a `409`.
 The wheel sets `won_at` and `prize` on winners so they stay excluded across
-spins; "reset draw" clears them. The wheel resolves a spin against a frozen copy
+spins, and `notified_at` when the (simulated) winner email is sent; "reset draw"
+clears all three. Existing databases: re-run `supabase/schema.sql` to add
+`notified_at` (additive, idempotent) before deploying this version. The wheel resolves a spin against a frozen copy
 of the list, and pauses polling while it spins or a modal is open, so a
 background refresh can't shift the result mid-animation.
 

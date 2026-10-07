@@ -8,6 +8,9 @@ import type { Participant } from "@/lib/api";
 
 const m = siteConfig.ruleta.messages;
 
+const FOCUS_RING =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
+
 type Props = {
   winners: Participant[];
   busy?: boolean;
@@ -15,6 +18,8 @@ type Props = {
   onExportCsv: () => void;
   onUndo: (id: string) => void;
   onEditPrize: (id: string, name: string, prize: string | null) => void;
+  /** Opens the (simulated) winner-email preview for this winner. */
+  onNotify?: (winner: Participant) => void;
 };
 
 function timeLabel(iso: string): string {
@@ -24,6 +29,16 @@ function timeLabel(iso: string): string {
   });
 }
 
+function notifyAction(w: Participant): string {
+  return w.notifiedAt ? m.resendEmail : m.notifyByEmail;
+}
+
+function notifyLabel(w: Participant): string {
+  return m.notifyAriaLabel
+    .replace("{action}", notifyAction(w))
+    .replace("{name}", w.name);
+}
+
 export function WinnersModal({
   winners,
   busy,
@@ -31,6 +46,7 @@ export function WinnersModal({
   onExportCsv,
   onUndo,
   onEditPrize,
+  onNotify,
 }: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -98,7 +114,31 @@ export function WinnersModal({
                   >
                     {w.prize ? `🎁 ${w.prize}` : m.addPrize}
                   </button>
+                  {w.notifiedAt && (
+                    <span className="ml-2 mt-1 inline-block rounded-full bg-green-500/10 px-2 py-0.5 text-[11px] text-green-400 ring-1 ring-inset ring-green-500/20">
+                      <time dateTime={w.notifiedAt}>
+                        {m.notifiedBadge.replace(
+                          "{time}",
+                          timeLabel(w.notifiedAt),
+                        )}
+                      </time>
+                    </span>
+                  )}
                 </div>
+                {onNotify && (
+                  <button
+                    onClick={() => onNotify(w)}
+                    disabled={busy}
+                    // Accessible name starts with the visible text (WCAG 2.5.3)
+                    // and adds the winner, so list buttons are distinguishable.
+                    aria-label={notifyLabel(w)}
+                    title={notifyLabel(w)}
+                    className={`flex-none rounded-lg bg-white/10 px-2.5 py-1.5 text-[11px] font-medium text-white/80 transition hover:bg-white/20 hover:text-white disabled:opacity-40 ${FOCUS_RING}`}
+                  >
+                    <span aria-hidden="true">✉ </span>
+                    {notifyAction(w)}
+                  </button>
+                )}
                 <button
                   onClick={() => onUndo(w.id)}
                   disabled={busy}

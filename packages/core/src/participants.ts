@@ -26,6 +26,14 @@ export class ParticipantNotFoundError extends Error {
   }
 }
 
+/** Thrown when an operation that only applies to winners hits a non-winner. */
+export class NotAWinnerError extends Error {
+  constructor() {
+    super("Participant has not won.");
+    this.name = "NotAWinnerError";
+  }
+}
+
 function isUniqueViolation(err: unknown): boolean {
   return (
     typeof err === "object" &&
@@ -124,6 +132,25 @@ export async function listParticipants(): Promise<WinnerParticipant[]> {
   return (data ?? []).map(toWinnerParticipant);
 }
 
+/** One participant by id, or `null` when the id matches nobody. */
+export async function getParticipant(
+  id: string,
+): Promise<WinnerParticipant | null> {
+  if (isMockDb()) {
+    const row = (await loadMockStore()).mockGetParticipant(id);
+    return row ? toWinnerParticipant(row) : null;
+  }
+
+  const supabase = getSupabaseClient(true);
+  const { data, error } = await supabase
+    .from("participants")
+    .select(PARTICIPANT_COLUMNS)
+    .eq("id", id)
+    .maybeSingle<ParticipantRow>();
+  if (error) throw error;
+  return data ? toWinnerParticipant(data) : null;
+}
+
 /** Marks a participant as winner (persistent). No-op if they already won. */
 export async function markWinner(
   id: string,
@@ -158,14 +185,49 @@ export async function markWinner(
   return toWinnerParticipant(existing);
 }
 
-/** Undo a single winner — puts them back in the pool and clears the prize. */
+/**
+ * Records that the winner email was (re)sent: `notified_at` = now. Calling it
+ * again overwrites the timestamp (resend). Only applies to winners.
+ *
+ * @throws ParticipantNotFoundError when the id matches nobody.
+ * @throws NotAWinnerError when the participant has no `won_at`.
+ */
+export async function markNotified(id: string): Promise<WinnerParticipant> {
+  if (isMockDb()) {
+    const row = (await loadMockStore()).mockMarkNotified(id);
+    if (!row) throw new ParticipantNotFoundError();
+    if (!row.won_at) throw new NotAWinnerError();
+    return toWinnerParticipant(row);
+  }
+
+  const supabase = getSupabaseClient(true);
+  // The `won_at is not null` guard lives in the UPDATE itself, so a winner
+  // undone concurrently is never stamped.
+  const { data, error } = await supabase
+    .from("participants")
+    .update({ notified_at: new Date().toISOString() })
+    .eq("id", id)
+    .not("won_at", "is", null)
+    .select(PARTICIPANT_COLUMNS)
+    .returns<ParticipantRow[]>();
+
+  if (error) throw error;
+  if (data && data.length > 0) return toWinnerParticipant(data[0]);
+
+  // Nothing updated: either it does not exist or it is not a winner.
+  const existing = await getParticipant(id);
+  if (!existing) throw new ParticipantNotFoundError();
+  throw new NotAWinnerError();
+}
+
+/** Undo a single winner — back in the pool; clears prize and notified_at. */
 export async function unmarkWinner(id: string): Promise<void> {
   if (isMockDb()) return (await loadMockStore()).mockUnmarkWinner(id);
 
   const supabase = getSupabaseClient(true);
   const { error } = await supabase
     .from("participants")
-    .update({ won_at: null, prize: null })
+    .update({ won_at: null, prize: null, notified_at: null })
     .eq("id", id);
   if (error) throw error;
 }
@@ -207,14 +269,14 @@ export async function deleteAllParticipants(): Promise<number> {
   return count ?? 0;
 }
 
-/** Clears every winner mark and prize — everyone back in the pool. */
+/** Clears every winner mark, prize and notification — everyone back in the pool. */
 export async function resetWinners(): Promise<void> {
   if (isMockDb()) return (await loadMockStore()).mockResetWinners();
 
   const supabase = getSupabaseClient(true);
   const { error } = await supabase
     .from("participants")
-    .update({ won_at: null, prize: null })
+    .update({ won_at: null, prize: null, notified_at: null })
     .not("won_at", "is", null);
   if (error) throw error;
 }

@@ -67,6 +67,46 @@ export type PosterConfig = {
   logoCard?: boolean;
 };
 
+/** Labels for the four draw modes, keyed by mode id (see apps/ruleta draw registry). */
+export type DrawModeLabels = {
+  wheel: string;
+  slot: string;
+  grid: string;
+  plinko: string;
+};
+
+/**
+ * Draw-mode presentation: selector copy, mode labels and the colours the
+ * slot / grid / plinko modes paint with (the wheel keeps `wheelSegmentFills`).
+ */
+export type DrawModesConfig = {
+  /** Accessible name of the mode selector in the header. */
+  selectorLabel: string;
+  labels: DrawModeLabels;
+  /** Caption above the live name banner on a wheel too crowded for labels. */
+  pointerLabel: string;
+  /** Colour reserved for the winning moment (grid pulse, slot name, plinko PRIZE bin). */
+  winColor: string;
+  /** Text drawn on top of `winColor`. */
+  winInk: string;
+  plinko: {
+    /** Label of the single golden bin. */
+    prizeLabel: string;
+    /** Label of every other bin. */
+    outLabel: string;
+    /** Heading of the side ticker listing balls as they land. */
+    tickerHeading: string;
+    /** Accessible description of the canvas board. */
+    boardAriaLabel: string;
+    /** Peg colour. */
+    pegColor: string;
+    /** Ball colours, cycled per participant. */
+    ballColors: string[];
+    /** Initials drawn on the balls. */
+    ballInk: string;
+  };
+};
+
 export type SiteConfig = {
   /** Product / event name. */
   name: string;
@@ -150,6 +190,8 @@ export type SiteConfig = {
     wheelSegmentFills: [string, string];
     /** Solid colour of the wheel rim / single-entry disc. */
     wheelRimColor: string;
+    /** Draw modes (wheel, slot, grid, plinko) — see {@link DrawModesConfig}. */
+    drawModes: DrawModesConfig;
     csv: {
       filenamePrefix: string;
       headers: [string, string, string, string, string];
@@ -321,6 +363,28 @@ export const siteConfig = defineSiteConfig({
     confettiColors: ["#0059b5", "#ffffff", "#abc7ff"],
     wheelSegmentFills: ["#0a63c4", "#00306b"],
     wheelRimColor: "#003e7e",
+    drawModes: {
+      selectorLabel: "Draw mode",
+      labels: {
+        wheel: "Wheel",
+        slot: "Slot",
+        grid: "Grid",
+        plinko: "Plinko",
+      },
+      pointerLabel: "Under the pointer",
+      winColor: "#f5b82e",
+      winInk: "#1a1200",
+      plinko: {
+        prizeLabel: "PRIZE",
+        outLabel: "out",
+        tickerHeading: "Landing",
+        boardAriaLabel:
+          "Plinko board: every participant drops as a ball, one lands in the prize bin.",
+        pegColor: "#9fb8e6",
+        ballColors: ["#0a63c4", "#3b82f6", "#00306b", "#60a5fa", "#1e40af"],
+        ballInk: "#ffffff",
+      },
+    },
     csv: {
       filenamePrefix: "winners",
       headers: ["name", "email", "id_last_3", "prize", "won_at"],

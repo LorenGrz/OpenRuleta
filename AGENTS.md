@@ -54,6 +54,11 @@ type-checked. What lives here:
 - `ruleta.wheelSpins`, `ruleta.wheelDurationMs` (keep in sync with the CSS
   transition), `ruleta.confettiColors`, `ruleta.wheelSegmentFills` `[even, odd]`,
   `ruleta.wheelRimColor`.
+- `ruleta.drawModes.*` — draw-mode selector label, mode labels (`wheel`, `slot`,
+  `grid`, `plinko`), the live "under the pointer" caption, `winColor` / `winInk`
+  (the winning moment in every mode) and `plinko.*` (`prizeLabel`, `outLabel`,
+  `tickerHeading`, `boardAriaLabel`, `pegColor`, `ballColors`, `ballInk`).
+  `wheelDurationMs` also paces the slot and grid modes.
 - `ruleta.csv.{filenamePrefix,headers}`.
 - `ruleta.messages.*` — every string the wheel renders, incl. `confirm()` dialogs
   with `{name}` / `{n}` placeholders.

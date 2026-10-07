@@ -107,13 +107,22 @@ export function WinnerModal({
               </p>
             )}
             {onNotify && (
-              <button
-                onClick={onNotify}
-                autoFocus
-                className={`w-full rounded-lg bg-primary py-3 font-semibold text-white transition hover:bg-primary-hover ${FOCUS_RING}`}
-              >
-                {winner.notifiedAt ? m.resendEmail : m.notifyByEmail}
-              </button>
+              <div className="flex flex-col gap-1.5">
+                <button
+                  onClick={onNotify}
+                  autoFocus
+                  disabled={!winner.prize}
+                  className={`w-full rounded-lg bg-primary py-3 font-semibold text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                >
+                  {winner.notifiedAt ? m.resendEmail : m.notifyByEmail}
+                </button>
+                {/* M6: no prize means nothing to announce, so the operator
+                    is told why the button is disabled instead of hitting
+                    the route's own no_prize error after the fact. */}
+                {!winner.prize && (
+                  <p className="text-xs text-white/50">{m.notifyNoPrize}</p>
+                )}
+              </div>
             )}
             {onClose && (
               <button

@@ -55,6 +55,8 @@ type-checked. What lives here:
   transition), `ruleta.confettiColors`, `ruleta.wheelSegmentFills` `[even, odd]`,
   `ruleta.wheelRimColor`.
 - `ruleta.csv.{filenamePrefix,headers}`.
+- `ruleta.email.{from,subject,body}` — the winner email (simulated, nothing is
+  sent). `{name}` / `{prize}` placeholders; blank lines in `body` = paragraphs.
 - `ruleta.messages.*` — every string the wheel renders, incl. `confirm()` dialogs
   with `{name}` / `{n}` placeholders.
 - `sponsors[]` / `collaborators[]` — `{ name, src?, tier? }`. `src` is a path into

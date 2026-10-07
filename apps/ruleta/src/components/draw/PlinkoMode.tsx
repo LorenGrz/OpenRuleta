@@ -19,7 +19,7 @@ import {
 } from "@/lib/draw/plinkoPaths";
 
 import type { DrawModeProps } from "./types";
-import { useDrawRun } from "./useDrawRun";
+import { SETTLE_GRACE_MS, useDrawRun, useSettleOnce } from "./useDrawRun";
 import { useElementSize } from "./useElementSize";
 
 const { drawModes } = siteConfig.ruleta;
@@ -249,7 +249,7 @@ export function PlinkoMode({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { width, height } = useElementSize(boxRef);
   const runRef = useRef<Run | null>(null);
-  const settledRun = useRef(0);
+  const settleOnce = useSettleOnce();
   const [ticker, setTicker] = useState<{ runId: number; items: TickerItem[] }>({
     runId: 0,
     items: [],
@@ -270,9 +270,15 @@ export function PlinkoMode({
   }, [width, height, winnerIndex]);
 
   useDrawRun(runId, winnerIndex !== null, () => {
-    const box = boxRef.current;
-    if (winnerIndex === null || n === 0 || !box) return;
     const id = runId;
+    const box = boxRef.current;
+    if (winnerIndex === null || n === 0) return;
+    if (!box) {
+      // No box to measure yet: nothing will animate, so settle right away
+      // instead of leaving the UI parked on "spinning" (I3).
+      settleOnce(id, onSettled);
+      return;
+    }
     const timing = reducedMotion ? TIMING.reduced : TIMING.normal;
     const fallMs = n > LARGE_POOL ? timing.fallLargeMs : timing.fallMs;
     const seed = (Math.random() * 2 ** 32) >>> 0;
@@ -309,7 +315,12 @@ export function PlinkoMode({
       plinkoGeometry(box.clientWidth, box.clientHeight, ROWS),
       run,
     );
-    if (!painter) return;
+    if (!painter) {
+      // No 2D context available: same as the missing-box case above, settle
+      // instead of leaving the UI stuck "spinning" (I3).
+      settleOnce(id, onSettled);
+      return;
+    }
 
     const loop = (now: number) => {
       run.startedAt ??= now;
@@ -353,9 +364,7 @@ export function PlinkoMode({
         finaleTimer = window.setTimeout(() => {
           sound.win();
           finaleTimer = window.setTimeout(() => {
-            if (settledRun.current === id) return;
-            settledRun.current = id;
-            onSettled();
+            settleOnce(id, onSettled);
           }, timing.finaleMs);
         }, timing.finaleMs / 3);
       }
@@ -364,9 +373,17 @@ export function PlinkoMode({
       if (!allDown || pending.length) frame = requestAnimationFrame(loop);
     };
     frame = requestAnimationFrame(loop);
+    // Backstop (I3): settles the run even if the loop above never reaches
+    // its own completion handler, so a stuck mode cannot leave the UI
+    // parked on "spinning" forever.
+    const fallback = window.setTimeout(
+      () => settleOnce(id, onSettled),
+      timing.totalMs + timing.finaleMs * 2 + SETTLE_GRACE_MS,
+    );
     return () => {
       cancelAnimationFrame(frame);
       window.clearTimeout(finaleTimer);
+      window.clearTimeout(fallback);
     };
   });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import { siteConfig } from "@openruleta/config";
 
@@ -13,7 +13,7 @@ import {
 } from "@/lib/draw/wheelTiming";
 
 import type { DrawModeProps } from "./types";
-import { useDrawRun } from "./useDrawRun";
+import { useDrawRun, useSettleOnce } from "./useDrawRun";
 
 const { wheelSpins, wheelDurationMs, drawModes } = siteConfig.ruleta;
 /** Above this, Wheel.tsx drops segment labels, so a live banner names the pointer. */
@@ -37,16 +37,16 @@ export function WheelMode({
   const [rotation, setRotation] = useState(0);
   const [spin, setSpin] = useState<Spin | null>(null);
   const [livePointer, setLivePointer] = useState<number | null>(null);
-  const settledRun = useRef(0);
+  const settleOnce = useSettleOnce();
   const n = pool.length;
 
   function settle(id: number) {
-    if (settledRun.current === id) return;
-    settledRun.current = id;
-    setSpin(null);
-    setLivePointer(null);
-    sound.land();
-    onSettled();
+    settleOnce(id, () => {
+      setSpin(null);
+      setLivePointer(null);
+      sound.land();
+      onSettled();
+    });
   }
 
   useDrawRun(runId, winnerIndex !== null, () => {

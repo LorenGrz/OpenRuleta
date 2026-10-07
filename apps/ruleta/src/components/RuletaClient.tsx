@@ -8,6 +8,7 @@ import { Wordmark } from "@openruleta/ui";
 import { CollaboratorCarousel } from "@/components/CollaboratorCarousel";
 import { DrawModeSelector } from "@/components/draw/DrawModeSelector";
 import { getDrawMode } from "@/components/draw/registry";
+import type { DrawModeId } from "@/components/draw/types";
 import { useDrawMode } from "@/components/draw/useDrawMode";
 import { useReducedMotion } from "@/components/draw/useReducedMotion";
 import { EditableTitle, useRaffleTitle } from "@/components/EditableTitle";
@@ -122,6 +123,11 @@ export function RuletaClient() {
   // Frozen list the current spin resolves against.
   const poolRef = useRef<Participant[]>([]);
   const pendingIndexRef = useRef(0);
+  // True only while a spin's animation is actually in flight (I2): guards
+  // handleSettled against a stray call from a remounted draw mode (e.g. one
+  // triggered by a mode switch from another tab) reopening/rewinding the
+  // winner modal.
+  const spinningRef = useRef(false);
 
   // Draw modes only animate towards the winner spin() already picked.
   const [drawMode, setDrawMode] = useDrawMode();
@@ -129,6 +135,9 @@ export function RuletaClient() {
     runId: number;
     pool: Participant[];
     winnerIndex: number;
+    // Mode locked in at spin() time (I2): a mode switch from another tab
+    // must not remount the running scene mid-draw.
+    mode: DrawModeId;
   } | null>(null);
   const sound = useSoundEngine(soundOn);
   const reducedMotion = useReducedMotion();
@@ -212,7 +221,11 @@ export function RuletaClient() {
   const canSpin = activePool.length > 0 && !spinning && !modalWinner && !busy;
   // The frozen pool and winner stay on stage until the winner is confirmed or skipped.
   const drawInFlight = draw !== null && (spinning || modalWinner !== null);
-  const ActiveDrawMode = getDrawMode(drawMode).Component;
+  // While a draw is in flight, keep rendering the mode it was spun with
+  // (I2): a mode switch from another tab must not remount the running
+  // scene, which would replay its animation and call onSettled() again.
+  const renderedDrawMode = drawInFlight ? draw.mode : drawMode;
+  const ActiveDrawMode = getDrawMode(renderedDrawMode).Component;
 
   function spin() {
     if (!canSpin) return;
@@ -222,15 +235,22 @@ export function RuletaClient() {
     pendingIndexRef.current = idx;
 
     sound.unlock();
+    spinningRef.current = true;
     setDraw((prev) => ({
       runId: (prev?.runId ?? 0) + 1,
       pool,
       winnerIndex: idx,
+      mode: drawMode,
     }));
     setSpinning(true);
   }
 
   function handleSettled() {
+    // Ignore a call with no spin in flight (I2): a remounted draw mode
+    // replays its animation to completion, which would otherwise reopen
+    // the winner modal or rewind it to the "confirm" step after it settled.
+    if (!spinningRef.current) return;
+    spinningRef.current = false;
     setSpinning(false);
     const w = poolRef.current[pendingIndexRef.current];
     if (w) setModalWinner(w);
@@ -242,11 +262,20 @@ export function RuletaClient() {
     setLoadError(null);
     try {
       const confirmed = await confirmWinnerApi(modalWinner.id, prize);
-      await reload();
-      // Keep the modal open on its post-confirm step (notify by email).
+      // Keep the modal open on its post-confirm step (notify by email). This
+      // must happen even if the refresh below fails (M1): the winner is
+      // already confirmed server-side, so a failed refresh is a separate,
+      // lesser problem and must not be reported as a failed confirmation.
       setModalWinner(confirmed);
     } catch {
       setLoadError(m.confirmFailed);
+      setBusy(false);
+      return;
+    }
+    try {
+      await reload();
+    } catch {
+      setLoadError(m.reloadFailed);
     } finally {
       setBusy(false);
     }
@@ -393,7 +422,7 @@ export function RuletaClient() {
 
             <div className="flex min-h-0 w-full flex-1 items-center justify-center">
               <ActiveDrawMode
-                key={drawMode}
+                key={renderedDrawMode}
                 pool={drawInFlight ? draw.pool : activePool}
                 winnerIndex={drawInFlight ? draw.winnerIndex : null}
                 runId={draw?.runId ?? 0}

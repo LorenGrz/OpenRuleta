@@ -8,7 +8,7 @@ import { fitGrid, gridHopSchedule } from "@/lib/draw/gridLayout";
 import { createRng } from "@/lib/draw/random";
 
 import type { DrawModeProps } from "./types";
-import { useDrawRun } from "./useDrawRun";
+import { SETTLE_GRACE_MS, useDrawRun, useSettleOnce } from "./useDrawRun";
 import { useElementSize } from "./useElementSize";
 
 const { wheelDurationMs, drawModes } = siteConfig.ruleta;
@@ -31,7 +31,7 @@ export function GridMode({
   const boxRef = useRef<HTMLDivElement>(null);
   const { width, height } = useElementSize(boxRef);
   const [highlight, setHighlight] = useState<Highlight | null>(null);
-  const settledRun = useRef(0);
+  const settleOnce = useSettleOnce();
   const n = pool.length;
 
   useDrawRun(runId, winnerIndex !== null, () => {
@@ -63,11 +63,7 @@ export function GridMode({
         setHighlight({ runId: id, index: hops[current].index, done });
         if (done) {
           sound.land();
-          hold = window.setTimeout(() => {
-            if (settledRun.current === id) return;
-            settledRun.current = id;
-            onSettled();
-          }, HOLD_MS);
+          hold = window.setTimeout(() => settleOnce(id, onSettled), HOLD_MS);
           return;
         }
         sound.tick();
@@ -75,9 +71,17 @@ export function GridMode({
       frame = requestAnimationFrame(step);
     };
     frame = requestAnimationFrame(step);
+    // Backstop (I3): settles the run even if the rAF loop above never
+    // reaches its own completion handler, so a stuck mode cannot leave the
+    // UI parked on "spinning" forever.
+    const fallback = window.setTimeout(
+      () => settleOnce(id, onSettled),
+      durationMs + HOLD_MS + SETTLE_GRACE_MS,
+    );
     return () => {
       cancelAnimationFrame(frame);
       window.clearTimeout(hold);
+      window.clearTimeout(fallback);
     };
   });
 

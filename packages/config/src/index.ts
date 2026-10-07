@@ -269,6 +269,7 @@ export type SiteConfig = {
       /** Load / write errors surfaced under the wheel. */
       loadFailed: string;
       confirmFailed: string;
+      reloadFailed: string;
       prizeFailed: string;
       undoFailed: string;
       deleteFailed: string;
@@ -304,6 +305,7 @@ export type SiteConfig = {
       /** Notify route-handler error bodies. */
       notifyNotWinner: string;
       notifyNoPrize: string;
+      notifyInvalidId: string;
       notifyRouteFailed: string;
     };
   };
@@ -502,6 +504,8 @@ export const siteConfig = defineSiteConfig({
       confirmReset: "Reset the draw?",
       loadFailed: "Could not load the list.",
       confirmFailed: "Could not confirm the winner. Try again.",
+      reloadFailed:
+        "Winner confirmed, but the list could not refresh. Refresh manually.",
       prizeFailed: "Could not save the prize.",
       undoFailed: "Could not undo.",
       deleteFailed: "Could not remove the participant.",
@@ -535,6 +539,7 @@ export const siteConfig = defineSiteConfig({
       retry: "Try again",
       notifyNotWinner: "This participant has not won.",
       notifyNoPrize: "Assign a prize before notifying the winner.",
+      notifyInvalidId: "Invalid id.",
       notifyRouteFailed: "Could not send the email.",
     },
   },

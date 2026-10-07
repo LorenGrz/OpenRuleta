@@ -80,7 +80,12 @@ export type NotifyWinnerResponse = {
 };
 
 export type NotifyErrorCode =
-  "missing_id" | "not_found" | "not_a_winner" | "no_prize" | "send_failed";
+  | "missing_id"
+  | "invalid_id"
+  | "not_found"
+  | "not_a_winner"
+  | "no_prize"
+  | "send_failed";
 
 /**
  * Normalized failure of the notify call. `message` is the server's

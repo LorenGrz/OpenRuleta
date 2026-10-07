@@ -153,6 +153,10 @@ export type SiteConfig = {
     csv: {
       filenamePrefix: string;
       headers: [string, string, string, string, string];
+      /** Filename prefix for the "export all participants" CSV. */
+      participantsFilenamePrefix: string;
+      /** Columns for the "export all participants" CSV (incl. winners). */
+      participantsHeaders: [string, string, string, string, string, string];
     };
     messages: {
       sponsorsLabel: string;
@@ -163,6 +167,11 @@ export type SiteConfig = {
       close: string;
       muteSound: string;
       unmuteSound: string;
+      /** Header hamburger menu. */
+      menu: string;
+      menuOpen: string;
+      menuClose: string;
+      exportParticipantsCsv: string;
       titleAriaLabel: string;
       editTitle: string;
       spin: string;
@@ -324,6 +333,15 @@ export const siteConfig = defineSiteConfig({
     csv: {
       filenamePrefix: "winners",
       headers: ["name", "email", "id_last_3", "prize", "won_at"],
+      participantsFilenamePrefix: "participants",
+      participantsHeaders: [
+        "name",
+        "email",
+        "id_last_3",
+        "created_at",
+        "won_at",
+        "prize",
+      ],
     },
     messages: {
       sponsorsLabel: "Sponsors",
@@ -334,6 +352,10 @@ export const siteConfig = defineSiteConfig({
       close: "Close (Esc)",
       muteSound: "Mute wheel",
       unmuteSound: "Unmute wheel",
+      menu: "Menu",
+      menuOpen: "Open menu",
+      menuClose: "Close menu",
+      exportParticipantsCsv: "Export participants CSV",
       titleAriaLabel: "Draw title",
       editTitle: "Edit title",
       spin: "Spin",

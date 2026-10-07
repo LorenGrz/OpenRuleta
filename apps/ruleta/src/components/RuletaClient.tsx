@@ -7,12 +7,14 @@ import { Wordmark } from "@openruleta/ui";
 
 import { CollaboratorCarousel } from "@/components/CollaboratorCarousel";
 import { EditableTitle, useRaffleTitle } from "@/components/EditableTitle";
+import { HeaderMenu } from "@/components/HeaderMenu";
 import { ParticipantsPanel } from "@/components/ParticipantsPanel";
 import { QrOverlay } from "@/components/QrOverlay";
 import { SponsorCarousel } from "@/components/SponsorCarousel";
 import { Wheel } from "@/components/Wheel";
 import { WinnerModal } from "@/components/WinnerModal";
 import { WinnersModal } from "@/components/WinnersModal";
+import { downloadCsv, toCsv } from "@/lib/csv";
 import { playSpinTicks } from "@/lib/spinSound";
 import {
   confirmWinner as confirmWinnerApi,
@@ -33,29 +35,44 @@ const SOUND_KEY = `${siteConfig.slug}-ruleta-sound`;
 const fill = (s: string, vars: Record<string, string>) =>
   Object.entries(vars).reduce((acc, [k, v]) => acc.replaceAll(`{${k}}`, v), s);
 
-function csvCell(value: string): string {
-  return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+function csvFilename(prefix: string): string {
+  return `${prefix}-${new Date().toISOString().slice(0, 10)}.csv`;
 }
 
 function downloadWinnersCsv(winners: Participant[]): void {
-  const header = siteConfig.ruleta.csv.headers;
-  const rows = winners.map((w) =>
-    [w.name, w.email, w.docLast3, w.prize ?? "", w.wonAt ?? ""]
-      .map(csvCell)
-      .join(","),
+  const csv = toCsv(
+    siteConfig.ruleta.csv.headers,
+    winners.map((w) => [
+      w.name,
+      w.email,
+      w.docLast3,
+      w.prize ?? "",
+      w.wonAt ?? "",
+    ]),
   );
-  const csv = `${header.join(",")}\n${rows.join("\n")}\n`;
-  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${siteConfig.ruleta.csv.filenamePrefix}-${new Date()
-    .toISOString()
-    .slice(0, 10)}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  downloadCsv(csvFilename(siteConfig.ruleta.csv.filenamePrefix), csv);
+}
+
+// All participants, winners included — doc is exported raw (not masked):
+// the stored value is already just the last 3 digits, so masking it in the
+// CSV would only hide data the operator (who holds the service_role key)
+// already has full access to, with no added privacy benefit.
+function downloadParticipantsCsv(participants: Participant[]): void {
+  const csv = toCsv(
+    siteConfig.ruleta.csv.participantsHeaders,
+    participants.map((p) => [
+      p.name,
+      p.email,
+      p.docLast3,
+      p.createdAt,
+      p.wonAt ?? "",
+      p.prize ?? "",
+    ]),
+  );
+  downloadCsv(
+    csvFilename(siteConfig.ruleta.csv.participantsFilenamePrefix),
+    csv,
+  );
 }
 
 export function RuletaClient() {
@@ -315,14 +332,6 @@ export function RuletaClient() {
         />
         <div className="flex items-center gap-3">
           <button
-            onClick={toggleSound}
-            title={soundOn ? m.muteSound : m.unmuteSound}
-            aria-label={soundOn ? m.muteSound : m.unmuteSound}
-            className="rounded-lg bg-white/10 px-3 py-2 text-sm text-white transition hover:bg-white/20"
-          >
-            {soundOn ? "🔊" : "🔇"}
-          </button>
-          <button
             onClick={() => setShowQr(true)}
             className="rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
           >
@@ -332,6 +341,17 @@ export function RuletaClient() {
             <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
             {m.privateBadge}
           </span>
+          <HeaderMenu
+            onRefresh={manualRefresh}
+            refreshing={refreshing}
+            onExportParticipantsCsv={() =>
+              downloadParticipantsCsv(participants)
+            }
+            onDeleteAll={deleteAllParticipants}
+            deletingAll={deletingAll}
+            soundOn={soundOn}
+            onToggleSound={toggleSound}
+          />
         </div>
       </header>
 
@@ -400,13 +420,9 @@ export function RuletaClient() {
             participants={participants}
             removedIds={skipIds}
             newestId={newestId}
-            refreshing={refreshing}
             lastUpdated={lastUpdated}
-            onRefresh={manualRefresh}
             onDelete={deleteParticipant}
             deletingId={deletingId}
-            onDeleteAll={deleteAllParticipants}
-            deletingAll={deletingAll}
           />
         </div>
       </div>

@@ -14,9 +14,10 @@ import {
 
 import type { DrawModeProps } from "./types";
 import { useDrawRun, useSettleOnce } from "./useDrawRun";
+import { useElementSize } from "./useElementSize";
 
 const { wheelSpins, wheelDurationMs, drawModes } = siteConfig.ruleta;
-/** Above this, Wheel.tsx drops segment labels, so a live banner names the pointer. */
+/** Above this, the wheel's own labels can get tiny/sparse, so a live banner also names the pointer. */
 const LABEL_LIMIT = 32;
 const REDUCED_DURATION_MS = 900;
 /** Ticks closer than this blur into noise at full speed. */
@@ -39,6 +40,9 @@ export function WheelMode({
   const [livePointer, setLivePointer] = useState<number | null>(null);
   const settleOnce = useSettleOnce();
   const n = pool.length;
+  const stageRef = useRef<HTMLDivElement>(null);
+  const { width, height } = useElementSize(stageRef);
+  const sizePx = Math.max(0, Math.min(width, height));
 
   function settle(id: number) {
     settleOnce(id, () => {
@@ -86,16 +90,22 @@ export function WheelMode({
   const pointerName = n > 0 ? (pool[pointerIndex]?.name ?? "") : "";
   const showBanner = n > LABEL_LIMIT;
   const settledOnWinner = !spin && winnerIndex !== null;
+  const highlightIndex = settledOnWinner ? pointerIndex : null;
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="w-[min(460px,52dvh)]">
+    <div className="flex h-full min-h-0 w-full flex-col items-center gap-4">
+      <div
+        ref={stageRef}
+        className="flex min-h-0 w-full flex-1 items-center justify-center"
+      >
         <Wheel
           entries={pool.map((p) => ({ id: p.id, name: p.name }))}
           rotation={rotation}
           durationMs={spin?.durationMs ?? wheelDurationMs}
           spinning={spin !== null}
           onSettled={() => spin && settle(spin.runId)}
+          sizePx={sizePx}
+          highlightIndex={highlightIndex}
         />
       </div>
       {showBanner && (

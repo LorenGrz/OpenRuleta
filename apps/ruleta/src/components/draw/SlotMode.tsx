@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 
 import { siteConfig } from "@openruleta/config";
 
@@ -12,7 +12,7 @@ import {
 } from "@/lib/draw/slotReel";
 
 import type { DrawModeProps } from "./types";
-import { useDrawRun } from "./useDrawRun";
+import { SETTLE_GRACE_MS, useDrawRun, useSettleOnce } from "./useDrawRun";
 
 const { wheelDurationMs, drawModes } = siteConfig.ruleta;
 const STEPS = 48;
@@ -34,7 +34,7 @@ export function SlotMode({
   reducedMotion,
 }: DrawModeProps) {
   const [reel, setReel] = useState<Reel | null>(null);
-  const settledRun = useRef(0);
+  const settleOnce = useSettleOnce();
   const n = pool.length;
 
   useDrawRun(runId, winnerIndex !== null, () => {
@@ -66,16 +66,20 @@ export function SlotMode({
         return;
       }
       sound.land();
-      hold = window.setTimeout(() => {
-        if (settledRun.current === id) return;
-        settledRun.current = id;
-        onSettled();
-      }, HOLD_MS);
+      hold = window.setTimeout(() => settleOnce(id, onSettled), HOLD_MS);
     };
     frame = requestAnimationFrame(step);
+    // Backstop (I3): settles the run even if the rAF loop above never
+    // reaches its own completion handler, so a stuck mode cannot leave the
+    // UI parked on "spinning" forever.
+    const fallback = window.setTimeout(
+      () => settleOnce(id, onSettled),
+      durationMs + HOLD_MS + SETTLE_GRACE_MS,
+    );
     return () => {
       cancelAnimationFrame(frame);
       window.clearTimeout(hold);
+      window.clearTimeout(fallback);
     };
   });
 

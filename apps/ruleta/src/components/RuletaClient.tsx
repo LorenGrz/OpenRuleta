@@ -262,11 +262,20 @@ export function RuletaClient() {
     setLoadError(null);
     try {
       const confirmed = await confirmWinnerApi(modalWinner.id, prize);
-      await reload();
-      // Keep the modal open on its post-confirm step (notify by email).
+      // Keep the modal open on its post-confirm step (notify by email). This
+      // must happen even if the refresh below fails (M1): the winner is
+      // already confirmed server-side, so a failed refresh is a separate,
+      // lesser problem and must not be reported as a failed confirmation.
       setModalWinner(confirmed);
     } catch {
       setLoadError(m.confirmFailed);
+      setBusy(false);
+      return;
+    }
+    try {
+      await reload();
+    } catch {
+      setLoadError(m.reloadFailed);
     } finally {
       setBusy(false);
     }

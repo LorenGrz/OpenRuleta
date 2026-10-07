@@ -269,6 +269,7 @@ export type SiteConfig = {
       /** Load / write errors surfaced under the wheel. */
       loadFailed: string;
       confirmFailed: string;
+      reloadFailed: string;
       prizeFailed: string;
       undoFailed: string;
       deleteFailed: string;
@@ -502,6 +503,8 @@ export const siteConfig = defineSiteConfig({
       confirmReset: "Reset the draw?",
       loadFailed: "Could not load the list.",
       confirmFailed: "Could not confirm the winner. Try again.",
+      reloadFailed:
+        "Winner confirmed, but the list could not refresh. Refresh manually.",
       prizeFailed: "Could not save the prize.",
       undoFailed: "Could not undo.",
       deleteFailed: "Could not remove the participant.",

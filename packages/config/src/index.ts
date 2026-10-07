@@ -305,6 +305,7 @@ export type SiteConfig = {
       /** Notify route-handler error bodies. */
       notifyNotWinner: string;
       notifyNoPrize: string;
+      notifyInvalidId: string;
       notifyRouteFailed: string;
     };
   };
@@ -538,6 +539,7 @@ export const siteConfig = defineSiteConfig({
       retry: "Try again",
       notifyNotWinner: "This participant has not won.",
       notifyNoPrize: "Assign a prize before notifying the winner.",
+      notifyInvalidId: "Invalid id.",
       notifyRouteFailed: "Could not send the email.",
     },
   },

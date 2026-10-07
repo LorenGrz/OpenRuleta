@@ -57,13 +57,16 @@ test("labelFor shortens to first name + last initial when the full name overflow
   assert.equal(labelFor("Pablo Andrés Espinoza Miranda", 10), "Pablo M.");
 });
 
-// Collapses to an ellipsis when not even the short form fits.
-test("labelFor falls back to an ellipsis when nothing fits", () => {
-  assert.equal(labelFor("Pablo Andrés Espinoza Miranda", 3), "…");
+// Never a bare "…": first name, then a cut first name, then initials.
+test("labelFor degrades to first name, cut name, then initials", () => {
+  assert.equal(labelFor("Pablo Andrés Espinoza Miranda", 6), "Pablo");
+  assert.equal(labelFor("Alejandro Gariglio", 6), "Aleja…");
+  assert.equal(labelFor("Pablo Andrés Espinoza Miranda", 3), "PAE");
 });
 
 test("labelFor handles a single-word name with no short form to fall back to", () => {
-  assert.equal(labelFor("Cher", 2), "…");
+  assert.equal(labelFor("Cher", 2), "C");
+  assert.equal(labelFor("Cherilyn", 5), "Cher…");
   assert.equal(labelFor("Cher", 10), "Cher");
 });
 

@@ -93,7 +93,7 @@ export function WheelMode({
   const highlightIndex = settledOnWinner ? pointerIndex : null;
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col items-center gap-4">
+    <div className="flex h-full min-h-0 w-full flex-col items-center gap-2">
       <div
         ref={stageRef}
         className="flex min-h-0 w-full flex-1 items-center justify-center"
@@ -109,14 +109,14 @@ export function WheelMode({
         />
       </div>
       {showBanner && (
-        <div className="flex w-full max-w-3xl flex-col items-center gap-1 text-center">
+        <div className="flex w-full max-w-3xl flex-col items-center gap-0 text-center">
           <span className="text-xs font-medium text-white/50">
             {drawModes.pointerLabel}
           </span>
           <p
             title={pointerName}
             style={settledOnWinner ? { color: drawModes.winColor } : undefined}
-            className="w-full truncate text-4xl font-bold text-white tabular-nums lg:text-5xl"
+            className="w-full truncate text-2xl font-bold text-white tabular-nums lg:text-3xl"
           >
             {pointerName}
           </p>

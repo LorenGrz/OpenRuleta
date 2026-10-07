@@ -60,7 +60,9 @@ export function maxCharsFor(fontSizePx: number, lengthPx: number): number {
 
 /**
  * `name` shortened to fit `maxChars`: the full name if it fits, else "First
- * L." (first name + last-name initial) if that fits, else an ellipsis.
+ * L." (first name + last-name initial) if that fits, else the first name,
+ * else the first name cut with "…", else initials. Never a bare "…", so every
+ * segment keeps something identifiable.
  */
 export function labelFor(name: string, maxChars: number): string {
   const trimmed = name.trim().replace(/\s+/g, " ");
@@ -72,7 +74,13 @@ export function labelFor(name: string, maxChars: number): string {
     const short = `${parts[0]} ${last[0].toUpperCase()}.`;
     if (short.length <= maxChars) return short;
   }
-  return "…";
+  const first = parts[0];
+  if (first.length <= maxChars) return first;
+  if (maxChars >= 4) return `${first.slice(0, maxChars - 1)}…`;
+  return parts
+    .map((p) => p[0].toUpperCase())
+    .join("")
+    .slice(0, maxChars);
 }
 
 /**

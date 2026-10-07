@@ -14,13 +14,9 @@ type Props = {
   participants: Participant[];
   removedIds: Set<string>;
   newestId: string | null;
-  refreshing: boolean;
   lastUpdated: Date | null;
-  onRefresh: () => void;
   onDelete: (id: string, name: string) => void;
   deletingId: string | null;
-  onDeleteAll: () => void;
-  deletingAll: boolean;
 };
 
 function timeLabel(iso: string): string {
@@ -34,13 +30,9 @@ export function ParticipantsPanel({
   participants,
   removedIds,
   newestId,
-  refreshing,
   lastUpdated,
-  onRefresh,
   onDelete,
   deletingId,
-  onDeleteAll,
-  deletingAll,
 }: Props) {
   const [query, setQuery] = useState("");
 
@@ -77,36 +69,6 @@ export function ParticipantsPanel({
             {m.inPlay.replace("{n}", String(active))}
           </span>
         </div>
-
-        <button
-          onClick={onRefresh}
-          disabled={refreshing}
-          className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:opacity-60"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path d="M21 12a9 9 0 1 1-3-6.7L21 8" strokeLinecap="round" />
-            <path d="M21 3v5h-5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          {refreshing ? m.refreshing : m.refresh}
-        </button>
-
-        <button
-          onClick={onDeleteAll}
-          disabled={deletingAll || participants.length === 0}
-          className="mb-3 w-full rounded-lg border border-error/50 px-3 py-2 text-sm font-semibold text-error transition hover:bg-error/15 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {deletingAll
-            ? m.deletingAll
-            : `${m.deleteAll}${
-                participants.length ? ` (${participants.length})` : ""
-              }`}
-        </button>
 
         <div className="relative">
           <svg

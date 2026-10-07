@@ -6,18 +6,21 @@ import { siteConfig } from "@openruleta/config";
 import { Wordmark } from "@openruleta/ui";
 
 import { CollaboratorCarousel } from "@/components/CollaboratorCarousel";
+import { DrawModeSelector } from "@/components/draw/DrawModeSelector";
+import { getDrawMode } from "@/components/draw/registry";
+import { useDrawMode } from "@/components/draw/useDrawMode";
+import { useReducedMotion } from "@/components/draw/useReducedMotion";
 import { EditableTitle, useRaffleTitle } from "@/components/EditableTitle";
 import { HeaderMenu } from "@/components/HeaderMenu";
 import { EmailPreviewModal } from "@/components/EmailPreviewModal";
 import { ParticipantsPanel } from "@/components/ParticipantsPanel";
 import { QrOverlay } from "@/components/QrOverlay";
 import { SponsorCarousel } from "@/components/SponsorCarousel";
-import { Wheel } from "@/components/Wheel";
 import { WinnerModal } from "@/components/WinnerModal";
 import { WinnersModal } from "@/components/WinnersModal";
 import { downloadCsv, toCsv } from "@/lib/csv";
-import { playSpinTicks } from "@/lib/spinSound";
 import { useWinnerNotification } from "@/lib/useWinnerNotification";
+import { useSoundEngine } from "@/lib/sound/useSoundEngine";
 import {
   confirmWinner as confirmWinnerApi,
   deleteAllParticipants as deleteAllApi,
@@ -31,8 +34,6 @@ import {
 
 const POLL_MS = 5000;
 const m = siteConfig.ruleta.messages;
-const { wheelSpins: WHEEL_SPINS, wheelDurationMs: WHEEL_DURATION_MS } =
-  siteConfig.ruleta;
 const SOUND_KEY = `${siteConfig.slug}-ruleta-sound`;
 const fill = (s: string, vars: Record<string, string>) =>
   Object.entries(vars).reduce((acc, [k, v]) => acc.replaceAll(`{${k}}`, v), s);
@@ -115,13 +116,22 @@ export function RuletaClient() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const [rotation, setRotation] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [modalWinner, setModalWinner] = useState<Participant | null>(null);
 
   // Frozen list the current spin resolves against.
   const poolRef = useRef<Participant[]>([]);
   const pendingIndexRef = useRef(0);
+
+  // Draw modes only animate towards the winner spin() already picked.
+  const [drawMode, setDrawMode] = useDrawMode();
+  const [draw, setDraw] = useState<{
+    runId: number;
+    pool: Participant[];
+    winnerIndex: number;
+  } | null>(null);
+  const sound = useSoundEngine(soundOn);
+  const reducedMotion = useReducedMotion();
 
   const winners = useMemo(
     () =>
@@ -200,6 +210,9 @@ export function RuletaClient() {
   }
 
   const canSpin = activePool.length > 0 && !spinning && !modalWinner && !busy;
+  // The frozen pool and winner stay on stage until the winner is confirmed or skipped.
+  const drawInFlight = draw !== null && (spinning || modalWinner !== null);
+  const ActiveDrawMode = getDrawMode(drawMode).Component;
 
   function spin() {
     if (!canSpin) return;
@@ -208,17 +221,12 @@ export function RuletaClient() {
     poolRef.current = pool;
     pendingIndexRef.current = idx;
 
-    if (soundOn) playSpinTicks(WHEEL_DURATION_MS);
-
-    const seg = 360 / pool.length;
-    const mid = idx * seg + seg / 2;
-    setRotation((prev) => {
-      const prevMod = ((prev % 360) + 360) % 360;
-      const desiredMod = (360 - mid) % 360;
-      const delta = (desiredMod - prevMod + 360) % 360;
-      const jitter = (Math.random() - 0.5) * seg * 0.6;
-      return prev + 360 * WHEEL_SPINS + delta + jitter;
-    });
+    sound.unlock();
+    setDraw((prev) => ({
+      runId: (prev?.runId ?? 0) + 1,
+      pool,
+      winnerIndex: idx,
+    }));
     setSpinning(true);
   }
 
@@ -345,6 +353,11 @@ export function RuletaClient() {
           className="h-11"
         />
         <div className="flex items-center gap-3">
+          <DrawModeSelector
+            value={drawMode}
+            onChange={setDrawMode}
+            disabled={spinning || modalWinner !== null}
+          />
           <button
             onClick={() => setShowQr(true)}
             className="rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
@@ -378,13 +391,17 @@ export function RuletaClient() {
           <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 px-8">
             <EditableTitle />
 
-            <Wheel
-              entries={activePool.map((p) => ({ id: p.id, name: p.name }))}
-              rotation={rotation}
-              durationMs={WHEEL_DURATION_MS}
-              spinning={spinning}
-              onSettled={handleSettled}
-            />
+            <div className="flex min-h-0 w-full flex-1 items-center justify-center">
+              <ActiveDrawMode
+                key={drawMode}
+                pool={drawInFlight ? draw.pool : activePool}
+                winnerIndex={drawInFlight ? draw.winnerIndex : null}
+                runId={draw?.runId ?? 0}
+                onSettled={handleSettled}
+                sound={sound}
+                reducedMotion={reducedMotion}
+              />
+            </div>
 
             <div className="flex flex-col items-center gap-3">
               <button

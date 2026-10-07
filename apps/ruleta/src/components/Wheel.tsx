@@ -2,6 +2,8 @@
 
 import { siteConfig } from "@openruleta/config";
 
+import { WHEEL_TIMING_FUNCTION } from "@/lib/draw/wheelTiming";
+
 const { wheelSegmentFills, wheelRimColor } = siteConfig.ruleta;
 
 const VB = 100;
@@ -47,8 +49,8 @@ function label(name: string, count: number): string {
 }
 
 /**
- * Presentational wheel. All spin math lives in the parent event handler; this
- * component only renders `rotation` and reports when the CSS transition ends.
+ * Presentational wheel. All spin math lives in WheelMode; this component only
+ * renders `rotation` and reports when the CSS transition ends.
  */
 export function Wheel({
   entries,
@@ -84,7 +86,7 @@ export function Wheel({
           style={{
             transform: `rotate(${rotation}deg)`,
             transformOrigin: "50% 50%",
-            transition: `transform ${durationMs}ms cubic-bezier(0.16, 1, 0.3, 1)`,
+            transition: `transform ${durationMs}ms ${WHEEL_TIMING_FUNCTION}`,
           }}
           onTransitionEnd={() => {
             if (spinning) onSettled();

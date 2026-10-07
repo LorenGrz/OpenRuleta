@@ -8,3 +8,51 @@ body {
   font-family: var(--font-sans);
   background-color: #050505;
 }
+
+/* Draw modes: the winning card breathes in the configured win colour. */
+@keyframes draw-win-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--draw-win);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 28px 4px var(--draw-win);
+    transform: scale(1.06);
+  }
+}
+
+.draw-win-pulse {
+  animation: draw-win-pulse 1.4s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .draw-win-pulse {
+    animation: none;
+    box-shadow: 0 0 0 3px var(--draw-win);
+  }
+}
+
+/* Plinko: the winning ball zooms in over the board. */
+@keyframes plinko-finale {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.plinko-finale {
+  animation: plinko-finale 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plinko-finale {
+    animation-duration: 0.01ms;
+  }
+}

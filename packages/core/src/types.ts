@@ -24,6 +24,8 @@ export type WinnerParticipant = Participant & {
   wonAt: string | null;
   /** Prize assigned when the winner was confirmed, else null. */
   prize: string | null;
+  /** ISO timestamp of the last (simulated) winner email, else null. */
+  notifiedAt: string | null;
 };
 
 /** Raw `public.participants` row shape as returned by PostgREST. */
@@ -35,10 +37,11 @@ export type ParticipantRow = {
   created_at: string;
   won_at: string | null;
   prize: string | null;
+  notified_at: string | null;
 };
 
 export const PARTICIPANT_COLUMNS =
-  "id, name, email, doc_last3, created_at, won_at, prize";
+  "id, name, email, doc_last3, created_at, won_at, prize, notified_at";
 
 export function toWinnerParticipant(row: ParticipantRow): WinnerParticipant {
   return {
@@ -49,6 +52,8 @@ export function toWinnerParticipant(row: ParticipantRow): WinnerParticipant {
     createdAt: row.created_at,
     wonAt: row.won_at,
     prize: row.prize,
+    // `?? null`: mock-store files written before this column existed lack it.
+    notifiedAt: row.notified_at ?? null,
   };
 }
 

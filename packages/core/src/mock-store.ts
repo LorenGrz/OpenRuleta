@@ -73,6 +73,7 @@ function seed(): Store {
       ).toISOString(),
       won_at: isWinner ? new Date(now - 60_000).toISOString() : null,
       prize: isWinner ? "Mechanical keyboard" : null,
+      notified_at: null,
     };
   });
   return { participants };
@@ -151,8 +152,14 @@ export function mockAddParticipant(input: {
     created_at: new Date().toISOString(),
     won_at: null,
     prize: null,
+    notified_at: null,
   });
   write(store);
+}
+
+/** Returns the row, or `null` when the id matches nobody. */
+export function mockGetParticipant(id: string): ParticipantRow | null {
+  return read().participants.find((p) => p.id === id) ?? null;
 }
 
 /** Returns the row, or `null` when the id matches nobody. */
@@ -177,7 +184,24 @@ export function mockUnmarkWinner(id: string): void {
   if (!row) return;
   row.won_at = null;
   row.prize = null;
+  row.notified_at = null;
   write(store);
+}
+
+/**
+ * Stamps `notified_at` = now, but only on a winner (`won_at` set) — same guard
+ * as the real UPDATE. Returns the row (unchanged when it is not a winner), or
+ * `null` when the id matches nobody; `participants.ts` maps that to errors.
+ */
+export function mockMarkNotified(id: string): ParticipantRow | null {
+  const store = read();
+  const row = store.participants.find((p) => p.id === id);
+  if (!row) return null;
+  if (row.won_at) {
+    row.notified_at = new Date().toISOString();
+    write(store);
+  }
+  return row;
 }
 
 export function mockSetPrize(id: string, prize: string | null): void {
@@ -207,6 +231,7 @@ export function mockResetWinners(): void {
   for (const p of store.participants) {
     p.won_at = null;
     p.prize = null;
+    p.notified_at = null;
   }
   write(store);
 }

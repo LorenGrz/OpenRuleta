@@ -1,10 +1,13 @@
 # A2 — reasoner — Aviso por correo al ganador (mock) + notified_at
+
 - **Agente:** `reasoner` (Claude Opus 5.5)
 - **Skills:** `database-persistence-patterns`, `api-contract-design`, `nextjs-ssr-frontend`, `unit-test-generator`
 - **Worktree:** `/home/loren/projects/openruleta-wt/a2`, rama `feature/winner-email-mock` (ya activa)
 
 ## Prompt
+
 Contexto:
+
 - La tabla `public.participants` ya tiene `email` (obligatorio), `won_at` y `prize`.
 - El premio se guarda al confirmar el ganador (`markWinner` en `packages/core/src/participants.ts`).
 - La ruleta usa la service role en route handlers `apps/ruleta/src/app/api/*`.
@@ -41,6 +44,7 @@ Contexto:
 6. **Tests** (`unit-test-generator`): `buildWinnerEmail`, `MockEmailSender`, `markNotified` en el mock store (ganador / no ganador / reset limpia).
 
 ### Reglas comunes
+
 - **Primero invocá tus skills con la herramienta `Skill`** (están listadas arriba) y seguí sus guías.
 - **Leé antes de tocar código:** `AGENTS.md`, `CONTRIBUTING.md`, `README.md`, `packages/config/src/index.ts` (tipo `SiteConfig` y valores), `apps/ruleta/src/components/RuletaClient.tsx` y los componentes que vayas a modificar.
 - **Stack:** pnpm workspace, Next.js 16, React 19, Tailwind v4, TypeScript estricto.

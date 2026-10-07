@@ -29,6 +29,13 @@ from the **same Supabase project** and draws winners.
   in `@openruleta/core` stands in for a real provider. Copy lives in
   `siteConfig.ruleta.email`.
 
+- **Sound**: every draw mode plays through Tone.js
+  (`src/lib/sound/toneEngine.ts`), loaded lazily on the first Spin click so no
+  `AudioContext` exists before that; it falls back to the plain WebAudio
+  engine (`webAudioEngine.ts`) if `tone` fails to load. Swap the implementation
+  by editing `useSoundEngine.ts` — modes only talk to the `SoundEngine`
+  interface in `types.ts`, so either engine (or a new one) drops in unchanged.
+
 ## Endpoints
 
 | Method   | Route                             | Purpose                                                             |

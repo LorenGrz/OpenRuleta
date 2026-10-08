@@ -5,16 +5,18 @@ import {
   buildWinnerEmail,
   getParticipant,
   markNotified,
-  MockEmailSender,
   NotAWinnerError,
   ParticipantNotFoundError,
 } from "@openruleta/core";
 
+import { emailSenderFromEnv, withSenderAddress } from "@/lib/email";
 import { isUuid } from "@/lib/uuid";
 
 /**
- * POST /api/winners/notify — send the winner email (SIMULATED) and stamp
- * `notified_at`.
+ * POST /api/winners/notify — send the winner email and stamp `notified_at`.
+ *
+ * Delivery is real over SMTP (Gmail by default) when SMTP_USER and SMTP_PASS
+ * are set in the server env; otherwise it is SIMULATED with MockEmailSender.
  *
  * Request  (JSON): { id: string }   non-empty participant id.
  *
@@ -22,7 +24,7 @@ import { isUuid } from "@/lib/uuid";
  *   {
  *     preview:    EmailMessage,     // { to, from, subject, text, html? } exactly as "sent"
  *     messageId:  string,           // sender id, "mock-…" for the mock sender
- *     simulated:  true,             // nothing is ever delivered
+ *     simulated:  boolean,          // true when nothing was delivered (no SMTP config)
  *     notifiedAt: string            // ISO 8601 UTC, the new participants.notified_at
  *   }
  *
@@ -84,23 +86,27 @@ export async function POST(request: Request) {
     if (!participant.wonAt) return fail(409, m.notifyNotWinner, "not_a_winner");
     if (!participant.prize) return fail(409, m.notifyNoPrize, "no_prize");
 
+    const { sender, fromAddress } = emailSenderFromEnv();
+    const template = siteConfig.ruleta.email;
     const preview = buildWinnerEmail(
       {
         name: participant.name,
         email: participant.email,
         prize: participant.prize,
       },
-      siteConfig.ruleta.email,
+      fromAddress
+        ? { ...template, from: withSenderAddress(template.from, fromAddress) }
+        : template,
     );
 
-    const sent = await new MockEmailSender().send(preview);
+    const sent = await sender.send(preview);
     const updated = await markNotified(id);
 
     return NextResponse.json(
       {
         preview,
         messageId: sent.id,
-        simulated: true,
+        simulated: sent.simulated,
         notifiedAt: updated.notifiedAt,
       },
       { headers: { "Cache-Control": "no-store" } },

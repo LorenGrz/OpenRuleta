@@ -21,7 +21,7 @@ type Props = {
 };
 
 /**
- * Preview + status of the simulated winner email. Stacks above the winner /
+ * Preview + status of the winner email (real over SMTP, or simulated). Stacks above the winner /
  * winners modals: Esc is caught in the capture phase so it closes only this
  * dialog, Tab is trapped inside, and focus returns to the trigger on close.
  */
@@ -69,6 +69,8 @@ export function EmailPreviewModal({ state, onClose, onRetry }: Props) {
   }, [onClose]);
 
   const preview = state.status === "sent" ? state.result.preview : null;
+  // Only warn once the server says nothing was delivered (no SMTP configured).
+  const simulated = state.status === "sent" && state.result.simulated;
   const to = preview?.to ?? state.participant.email;
 
   return (
@@ -81,7 +83,7 @@ export function EmailPreviewModal({ state, onClose, onRetry }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        aria-describedby={noteId}
+        aria-describedby={simulated ? noteId : undefined}
         onClick={(e) => e.stopPropagation()}
         className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-2xl border border-white/10 bg-[#1b1b1b] text-left shadow-2xl"
       >
@@ -102,12 +104,14 @@ export function EmailPreviewModal({ state, onClose, onRetry }: Props) {
         </header>
 
         <div className="flex-1 overflow-y-auto px-6 py-4">
-          <p
-            id={noteId}
-            className="mb-4 rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-xs text-amber-200"
-          >
-            {m.emailSimulatedNote}
-          </p>
+          {simulated && (
+            <p
+              id={noteId}
+              className="mb-4 rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-xs text-amber-200"
+            >
+              {m.emailSimulatedNote}
+            </p>
+          )}
 
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
             <dt className="text-white/40">{m.emailTo}</dt>
@@ -142,7 +146,7 @@ export function EmailPreviewModal({ state, onClose, onRetry }: Props) {
             )}
             {state.status === "sent" && (
               <span className="font-semibold text-green-400">
-                {m.emailSent}
+                {state.result.simulated ? m.emailSent : m.emailDelivered}
                 <span className="ml-2 font-mono text-[11px] font-normal text-white/40">
                   {m.emailMessageId}: {state.result.messageId}
                 </span>

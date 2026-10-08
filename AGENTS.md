@@ -60,8 +60,10 @@ type-checked. What lives here:
   `tickerHeading`, `boardAriaLabel`, `pegColor`, `ballColors`, `ballInk`).
   `wheelDurationMs` also paces the slot and grid modes.
 - `ruleta.csv.{filenamePrefix,headers}`.
-- `ruleta.email.{from,subject,body}` — the winner email (simulated, nothing is
-  sent). `{name}` / `{prize}` placeholders; blank lines in `body` = paragraphs.
+- `ruleta.email.{from,subject,body}` — the winner email. `{name}` / `{prize}`
+  placeholders; blank lines in `body` = paragraphs. Simulated (nothing sent)
+  unless the ruleta has `SMTP_USER` + `SMTP_PASS` (see the env table); then it
+  goes out over SMTP from that account, keeping `from`'s display name.
 - `ruleta.messages.*` — every string the wheel renders, incl. `confirm()` dialogs
   with `{name}` / `{n}` placeholders.
 - `sponsors[]` / `collaborators[]` — `{ name, src?, tier? }`. `src` is a path into
@@ -152,12 +154,14 @@ Needed for a real event; skip for local/visual work (mock store covers it).
    cp apps/ruleta/.env.example apps/ruleta/.env.local
    ```
 
-| Var                         | form | ruleta | Value (Supabase → Settings → API)     |
-| --------------------------- | :--: | :----: | ------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`  |  ✅  |   ✅   | Project URL                           |
-| `SUPABASE_ANON_KEY`         |  ✅  |        | `anon` / publishable key              |
-| `SUPABASE_SERVICE_ROLE_KEY` |      |   ✅   | `service_role` key (server-side only) |
-| `RULETA_BASIC_AUTH`         |      |  opt.  | `user:password`, only when hosting    |
+| Var                                     | form | ruleta | Value (Supabase → Settings → API)                  |
+| --------------------------------------- | :--: | :----: | -------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`              |  ✅  |   ✅   | Project URL                                        |
+| `SUPABASE_ANON_KEY`                     |  ✅  |        | `anon` / publishable key                           |
+| `SUPABASE_SERVICE_ROLE_KEY`             |      |   ✅   | `service_role` key (server-side only)              |
+| `RULETA_BASIC_AUTH`                     |      |  opt.  | `user:password`, only when hosting                 |
+| `SMTP_USER` / `SMTP_PASS`               |      |  opt.  | Gmail address + app password: real winner email    |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_FROM` |      |  opt.  | Override the Gmail defaults (`smtp.gmail.com:465`) |
 
 The mock store activates whenever `NEXT_PUBLIC_SUPABASE_URL` is unset. Force it
 with `OPENRULETA_MOCK_DB=1` (always mock) / `=0` (always require Supabase).

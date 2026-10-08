@@ -75,7 +75,8 @@ export async function resetWinners(): Promise<void> {
 export type NotifyWinnerResponse = {
   preview: EmailMessage;
   messageId: string;
-  simulated: true;
+  /** true when nothing was delivered (no SMTP configured on the server). */
+  simulated: boolean;
   notifiedAt: string;
 };
 
@@ -112,7 +113,7 @@ export class NotifyWinnerError extends Error {
   }
 }
 
-/** Sends the (simulated) winner email and stamps notifiedAt. Resend-safe. */
+/** Sends the winner email (real over SMTP, else simulated) and stamps notifiedAt. Resend-safe. */
 export async function notifyWinner(id: string): Promise<NotifyWinnerResponse> {
   let res: Response;
   try {

@@ -417,10 +417,16 @@ export function RuletaClient() {
             <SponsorCarousel />
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 px-8">
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 px-8 py-8">
             <EditableTitle />
 
-            <div className="flex min-h-0 w-full flex-1 items-center justify-center">
+            {/* The wheel keeps its compact size so title + wheel + Spin sit
+                centred as one block; the other modes fill the stage. */}
+            <div
+              className={`flex w-full items-center justify-center ${
+                renderedDrawMode === "wheel" ? "flex-none" : "min-h-0 flex-1"
+              }`}
+            >
               <ActiveDrawMode
                 key={renderedDrawMode}
                 pool={drawInFlight ? draw.pool : activePool}

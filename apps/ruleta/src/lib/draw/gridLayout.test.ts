@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { fitGrid, gridSweepSchedule } from "./gridLayout.ts";
+import { fitGrid, gridLastGapMs, gridSweepSchedule } from "./gridLayout.ts";
 import { planSlotReel, slotIndexAt, slotPositionAt } from "./slotReel.ts";
 
 // Projector target: 80-120 names in the stage area left by header, panel and buttons.
@@ -48,6 +48,24 @@ test("gridSweepSchedule sweeps linearly, slows down and ends on the winner", () 
           const prevGap = hops[i - 1].atMs - hops[i - 2].atMs;
           assert.ok(gap >= prevGap - 1e-9);
         }
+      }
+    }
+  }
+});
+
+// The braking must settle gradually, not end in a long stall before the winner.
+test("gridSweepSchedule caps the final pause", () => {
+  for (const count of [2, 30, 100, 300]) {
+    for (const durationMs of [700, 4600]) {
+      const hops = gridSweepSchedule(count, count - 1, durationMs);
+      const last = hops[hops.length - 1].atMs - hops[hops.length - 2].atMs;
+      assert.ok(
+        last <= gridLastGapMs(durationMs) * 1.05,
+        `count ${count}, ${durationMs}ms: last gap ${last}`,
+      );
+      if (hops.length > 3) {
+        const prev = hops[hops.length - 2].atMs - hops[hops.length - 3].atMs;
+        assert.ok(last <= prev * 1.5, `abrupt final hop: ${prev} -> ${last}`);
       }
     }
   }

@@ -18,8 +18,6 @@ const { wheelDurationMs, drawModes } = siteConfig.ruleta;
 const GAP = 8;
 const REDUCED_DURATION_MS = 700;
 const HOLD_MS = 700;
-/** Cards behind the sweep's head that still glow, fading out with distance. */
-const TRAIL_LENGTH = 5;
 /** Sound ticks never play closer together than this, however fast the sweep. */
 const TICK_MIN_GAP_MS = 28;
 
@@ -105,18 +103,6 @@ export function GridMode({
     ? (active.hops[active.step]?.index ?? null)
     : null;
 
-  // Chase-light trail: the cards the sweep crossed just before the current
-  // one, fading out with distance. Only while still moving — once it settles
-  // the winner's own pulse takes over and the rest of the grid dims instead.
-  const trailAges = new Map<number, number>();
-  if (active && !active.done) {
-    for (let age = 1; age <= TRAIL_LENGTH; age++) {
-      const hop = active.hops[active.step - age];
-      if (!hop || hop.index === currentIndex) break;
-      if (!trailAges.has(hop.index)) trailAges.set(hop.index, age);
-    }
-  }
-
   const winStyle: CSSProperties = {
     backgroundColor: drawModes.winColor,
     color: drawModes.winInk,
@@ -138,7 +124,6 @@ export function GridMode({
           {pool.map((p, i) => {
             const isCurrent = currentIndex === i;
             const won = isCurrent && (active?.done ?? false);
-            const trailAge = won ? undefined : trailAges.get(i);
             const dimmed = (active?.done ?? false) && !won;
 
             let tone =
@@ -147,17 +132,12 @@ export function GridMode({
             if (won) {
               tone = "draw-win-pulse";
               style = winStyle;
-            } else if (isCurrent || trailAge !== undefined) {
+            } else if (isCurrent) {
+              // Only the card under the sweep lights up; the ones it already
+              // passed snap straight back (no trail, no fade) so the slow
+              // final hops read as a single moving light.
               tone = "bg-primary text-white";
-              if (trailAge !== undefined) {
-                // Furthest trail card (age === TRAIL_LENGTH) fades almost out;
-                // the one right behind the head (age === 1) stays nearly lit.
-                const t = 1 - (trailAge - 1) / TRAIL_LENGTH;
-                style = {
-                  opacity: 0.2 + 0.5 * t,
-                  boxShadow: `0 0 ${4 + 10 * t}px var(--color-primary)`,
-                };
-              }
+              style = { boxShadow: "0 0 14px var(--color-primary)" };
             } else if (dimmed) {
               style = { opacity: 0.55 };
             }
@@ -167,7 +147,7 @@ export function GridMode({
                 key={p.id}
                 title={p.name}
                 style={style}
-                className={`relative flex min-w-0 items-center justify-center rounded-lg px-[0.6em] font-semibold leading-tight transition-colors duration-100 ${tone}`}
+                className={`relative flex min-w-0 items-center justify-center rounded-lg px-[0.6em] font-semibold leading-tight ${tone}`}
               >
                 <span className="truncate">{p.name}</span>
                 {!won && (

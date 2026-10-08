@@ -1,4 +1,4 @@
-import { randomInt, type Rng } from "./random.ts";
+import { easeOutCubic, invertEasing } from "./easing.ts";
 
 export type GridFit = {
   columns: number;
@@ -67,16 +67,24 @@ export function fitGrid(
 export type GridHop = { index: number; atMs: number };
 
 /**
- * Highlight hops for the grid draw: random cards, never the same one twice in
- * a row, each gap longer than the last, ending on `winnerIndex` at exactly
- * `durationMs`.
+ * Full laps the sweep completes before settling, shorter for the brief
+ * reduced-motion duration so the pass still reads as "several laps" without
+ * packing hundreds of hops into under a second.
  */
-export function gridHopSchedule(
+function sweepLaps(durationMs: number): number {
+  return Math.max(2, Math.min(6, Math.round(durationMs / 900)));
+}
+
+/**
+ * Highlight hops for the grid draw: a linear sweep in reading order
+ * (0, 1, 2, ..., count-1, 0, ...), several full laps, ending on `winnerIndex`
+ * at exactly `durationMs`. Gaps between hops grow via ease-out, so the sweep
+ * starts fast and brakes into the landing.
+ */
+export function gridSweepSchedule(
   count: number,
   winnerIndex: number,
   durationMs: number,
-  hops: number,
-  rng: Rng,
 ): GridHop[] {
   if (!Number.isInteger(count) || count < 1) {
     throw new RangeError(`count must be a positive integer, got ${count}`);
@@ -90,22 +98,22 @@ export function gridHopSchedule(
       `winnerIndex ${winnerIndex} out of range [0, ${count})`,
     );
   }
-  const total = Math.max(1, Math.floor(hops));
   if (count === 1) return [{ index: 0, atMs: Math.max(0, durationMs) }];
 
-  // Built backwards from the winner so no card is ever lit twice in a row.
-  const indices: number[] = new Array(total);
-  indices[total - 1] = winnerIndex;
-  for (let i = total - 2; i >= 0; i--) {
-    const offset = 1 + randomInt(rng, count - 1);
-    indices[i] = (indices[i + 1] + offset) % count;
-  }
-
-  // atMs = duration * (1 - sqrt(1 - p)): every gap is longer than the one before.
-  return indices.map((index, i) => {
+  // Sweep starts at index 0 and keeps going forward; the last lap stops
+  // partway through, exactly on winnerIndex.
+  const laps = sweepLaps(durationMs);
+  const total = laps * count + winnerIndex + 1;
+  // Step index i is evenly spaced "progress" through the sweep; inverting
+  // the ease-out curve (same trick as the wheel's segmentCrossTimesMs) gives
+  // the time each step needs, so steps bunch up early and spread out as the
+  // sweep brakes into the landing.
+  const hops: GridHop[] = new Array(total);
+  for (let i = 0; i < total; i++) {
     const p = total === 1 ? 1 : i / (total - 1);
     const atMs =
-      i === total - 1 ? durationMs : durationMs * (1 - Math.sqrt(1 - p));
-    return { index, atMs };
-  });
+      i === total - 1 ? durationMs : durationMs * invertEasing(easeOutCubic, p);
+    hops[i] = { index: i % count, atMs };
+  }
+  return hops;
 }

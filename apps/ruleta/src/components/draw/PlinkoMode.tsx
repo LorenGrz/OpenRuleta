@@ -393,6 +393,8 @@ export function PlinkoMode({
 
   return (
     <div className="flex h-full w-full min-h-0 gap-4">
+      {/* Mirrors the ticker's width so the board sits in the exact centre. */}
+      <div aria-hidden className="hidden w-52 flex-none xl:block" />
       <div ref={boxRef} className="relative min-h-0 min-w-0 flex-1">
         <canvas
           ref={canvasRef}

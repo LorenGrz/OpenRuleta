@@ -95,8 +95,6 @@ export type DrawModesConfig = {
   /** Accessible name of the mode selector in the header. */
   selectorLabel: string;
   labels: DrawModeLabels;
-  /** Caption above the live name banner on a wheel too crowded for labels. */
-  pointerLabel: string;
   /** Colour reserved for the winning moment (grid pulse, slot name, plinko PRIZE bin). */
   winColor: string;
   /** Text drawn on top of `winColor`. */
@@ -202,10 +200,6 @@ export type SiteConfig = {
     wheelSegmentFills: [string, string];
     /** Solid colour of the wheel rim / single-entry disc. */
     wheelRimColor: string;
-    /** Colour of the exterior "corona" name labels, drawn outside the wheel. */
-    wheelLabelInk: string;
-    /** Alternating ink for interior radial labels, one per `wheelSegmentFills` entry. */
-    wheelLabelInks: [string, string];
     /** Draw modes (wheel, slot, grid, plinko) — see {@link DrawModesConfig}. */
     drawModes: DrawModesConfig;
     csv: {
@@ -414,9 +408,6 @@ export const siteConfig = defineSiteConfig({
     confettiColors: ["#0059b5", "#ffffff", "#abc7ff"],
     wheelSegmentFills: ["#0a63c4", "#00306b"],
     wheelRimColor: "#003e7e",
-    wheelLabelInk: "#ffffff",
-    // Both segment fills above are dark enough that white reads clearly on either.
-    wheelLabelInks: ["#ffffff", "#ffffff"],
     drawModes: {
       selectorLabel: "Draw mode",
       labels: {
@@ -425,7 +416,6 @@ export const siteConfig = defineSiteConfig({
         grid: "Grid",
         plinko: "Plinko",
       },
-      pointerLabel: "Under the pointer",
       winColor: "#f5b82e",
       winInk: "#1a1200",
       plinko: {

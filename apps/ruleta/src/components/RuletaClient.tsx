@@ -245,6 +245,34 @@ export function RuletaClient() {
     setSpinning(true);
   }
 
+  // Enter spins (projector-friendly), unless the operator is typing, a
+  // focused button would already handle Enter itself, or a dialog is open.
+  const spinRef = useRef(spin);
+  useEffect(() => {
+    spinRef.current = spin;
+  });
+  const overlayOpen =
+    showQr || showWinners || notification.state.status !== "idle";
+  useEffect(() => {
+    if (overlayOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Enter" || e.repeat) return;
+      if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+      const el = e.target as HTMLElement | null;
+      if (
+        el?.closest(
+          "input, textarea, select, button, a, [contenteditable], [role=dialog]",
+        )
+      ) {
+        return;
+      }
+      e.preventDefault();
+      spinRef.current();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [overlayOpen]);
+
   function handleSettled() {
     // Ignore a call with no spin in flight (I2): a remounted draw mode
     // replays its animation to completion, which would otherwise reopen
@@ -500,6 +528,7 @@ export function RuletaClient() {
           defaultPrize={raffleTitle}
           onConfirm={confirmWinner}
           onSpinAgain={removeAndReopen}
+          onCancel={() => setModalWinner(null)}
           onNotify={() => notification.notify(modalWinner)}
           onClose={() => setModalWinner(null)}
         />

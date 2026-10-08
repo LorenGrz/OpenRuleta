@@ -29,6 +29,8 @@ type Props = {
   defaultPrize?: string;
   onConfirm: (prize: string) => void;
   onSpinAgain: () => void;
+  /** Before confirming: closes without counting the draw (mis-spin, no prize left). */
+  onCancel?: () => void;
   /** Shown once confirmed (`winner.wonAt` set): opens the email preview. */
   onNotify?: () => void;
   /** Shown once confirmed: closes the modal. */
@@ -41,6 +43,7 @@ export function WinnerModal({
   defaultPrize,
   onConfirm,
   onSpinAgain,
+  onCancel,
   onNotify,
   onClose,
 }: Props) {
@@ -48,6 +51,16 @@ export function WinnerModal({
   // The parent swaps in the stored row after confirming, so wonAt flips the
   // modal to its post-confirm step (prize + notify) without remounting.
   const confirmed = Boolean(winner.wonAt);
+
+  // Escape cancels an unconfirmed draw, same as the close button.
+  useEffect(() => {
+    if (confirmed || !onCancel) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !busy) onCancel();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [confirmed, busy, onCancel]);
 
   useEffect(() => {
     const end = Date.now() + 1200;
@@ -73,7 +86,28 @@ export function WinnerModal({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#1b1b1b] p-8 text-center shadow-2xl">
+      <div className="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#1b1b1b] p-8 text-center shadow-2xl">
+        {!confirmed && onCancel && (
+          <button
+            onClick={onCancel}
+            disabled={busy}
+            aria-label={m.cancelDraw}
+            title={m.cancelDraw}
+            className={`absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full text-white/50 transition hover:bg-white/10 hover:text-white disabled:opacity-40 ${FOCUS_RING}`}
+          >
+            <svg
+              aria-hidden
+              viewBox="0 0 16 16"
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
+              <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" />
+            </svg>
+          </button>
+        )}
         <span className="mb-3 block text-4xl">🎉</span>
         <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-[#abc7ff]">
           {m.winnerHeading}
@@ -166,6 +200,15 @@ export function WinnerModal({
               >
                 {m.spinAgain}
               </button>
+              {onCancel && (
+                <button
+                  onClick={onCancel}
+                  disabled={busy}
+                  className="mx-auto text-sm text-white/50 underline transition hover:text-white disabled:opacity-40"
+                >
+                  {m.cancelDraw}
+                </button>
+              )}
             </div>
           </>
         )}

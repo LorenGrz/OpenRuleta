@@ -1,5 +1,6 @@
 import type { SoundEngine } from "./types.ts";
 import {
+  nextStartTime,
   PEG_THROTTLE_MS,
   pitchToPentatonicNote,
   shouldAllowPeg,
@@ -128,6 +129,9 @@ export function createToneEngine(): ToneSoundEngine {
   let loadStarted = false;
   let enabled = true;
   let lastPegMs = Number.NEGATIVE_INFINITY;
+  // Last start time (s) per monophonic synth; see nextStartTime.
+  let lastTickS = Number.NEGATIVE_INFINITY;
+  let lastLandS = Number.NEGATIVE_INFINITY;
 
   async function load(): Promise<void> {
     if (loadStarted) return;
@@ -191,10 +195,11 @@ export function createToneEngine(): ToneSoundEngine {
       if (!graph || !enabled) return;
       const jitterHz = (Math.random() - 0.5) * 160;
       const velocity = 0.55 + Math.random() * 0.15;
+      lastTickS = nextStartTime(lastTickS, graph.tone.now() + 0.003);
       graph.tickSynth.triggerAttackRelease(
         1650 + jitterHz,
         0.03,
-        graph.tone.now() + 0.003,
+        lastTickS,
         velocity,
       );
     },
@@ -221,12 +226,8 @@ export function createToneEngine(): ToneSoundEngine {
         return;
       }
       if (!graph || !enabled) return;
-      graph.landSynth.triggerAttackRelease(
-        85,
-        0.35,
-        graph.tone.now() + 0.01,
-        0.7,
-      );
+      lastLandS = nextStartTime(lastLandS, graph.tone.now() + 0.01);
+      graph.landSynth.triggerAttackRelease(85, 0.35, lastLandS, 0.7);
     },
     win() {
       if (fallback) {

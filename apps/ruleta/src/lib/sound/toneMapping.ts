@@ -46,3 +46,20 @@ export function shouldAllowPeg(
 ): boolean {
   return nowMs - lastPlayedMs >= minGapMs;
 }
+
+/** Smallest gap Tone accepts between two notes on the same monophonic synth. */
+export const MIN_START_STEP_S = 0.001;
+
+/**
+ * Start time (seconds) for a note on a monophonic Tone synth. Tone throws
+ * "Start time must be strictly greater than previous start time" when two
+ * notes share a start, which happens when ticks land inside the same audio
+ * render quantum (`tone.now()` only advances per quantum).
+ */
+export function nextStartTime(
+  lastStartS: number,
+  nowS: number,
+  minStepS: number = MIN_START_STEP_S,
+): number {
+  return Math.max(nowS, lastStartS + minStepS);
+}

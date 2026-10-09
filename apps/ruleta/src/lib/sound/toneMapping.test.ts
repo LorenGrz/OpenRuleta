@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  MIN_START_STEP_S,
+  nextStartTime,
   PENTATONIC_SCALE,
   pitchToPentatonicNote,
   shouldAllowPeg,
@@ -59,4 +61,21 @@ test("shouldAllowPeg enforces the minimum gap between hits", () => {
 test("shouldAllowPeg defaults to PEG_THROTTLE_MS", () => {
   assert.equal(shouldAllowPeg(0, 24), false);
   assert.equal(shouldAllowPeg(0, 25), true);
+});
+
+// Two ticks inside the same audio render quantum share tone.now(); the second
+// must still start strictly later or Tone throws.
+test("nextStartTime is strictly increasing even when the clock stalls", () => {
+  let last = Number.NEGATIVE_INFINITY;
+  const starts: number[] = [];
+  for (const now of [1, 1, 1, 1.0005, 2]) {
+    last = nextStartTime(last, now);
+    starts.push(last);
+  }
+  for (let i = 1; i < starts.length; i++) {
+    assert.ok(starts[i] > starts[i - 1], `${starts[i - 1]} -> ${starts[i]}`);
+  }
+  assert.equal(starts[0], 1);
+  assert.equal(starts[1], 1 + MIN_START_STEP_S);
+  assert.equal(starts[4], 2);
 });

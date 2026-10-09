@@ -68,7 +68,9 @@ export type PosterConfig = {
 };
 
 /**
- * Winner email (simulated — OpenRuleta sends nothing). `{name}` and `{prize}`
+ * Winner email. Sent over SMTP when apps/ruleta has SMTP_USER / SMTP_PASS set
+ * (the address is then replaced by the SMTP account, the display name kept);
+ * otherwise simulated, nothing is sent. `{name}` and `{prize}`
  * are substituted in `subject` and `body`; `body` is plain text, blank lines
  * become paragraphs in the HTML preview.
  */
@@ -253,6 +255,8 @@ export type SiteConfig = {
       confirmWinner: string;
       saving: string;
       spinAgain: string;
+      /** Closes the winner modal without confirming; the person stays in the pool. */
+      cancelDraw: string;
       winnersHeading: string;
       exportCsv: string;
       noWinners: string;
@@ -297,6 +301,8 @@ export type SiteConfig = {
       emailMessageId: string;
       emailSending: string;
       emailSent: string;
+      /** Status once a real (SMTP) send succeeded. */
+      emailDelivered: string;
       emailSimulatedNote: string;
       notifyFailed: string;
       retry: string;
@@ -487,6 +493,7 @@ export const siteConfig = defineSiteConfig({
       confirmWinner: "Confirm winner",
       saving: "Saving…",
       spinAgain: "Skip and spin again",
+      cancelDraw: "Cancel — doesn't count",
       winnersHeading: "Winners ({n})",
       exportCsv: "Export CSV",
       noWinners: "No winners yet.",
@@ -530,6 +537,7 @@ export const siteConfig = defineSiteConfig({
       emailMessageId: "Message ID",
       emailSending: "Sending…",
       emailSent: "Sent (simulated) ✓",
+      emailDelivered: "Email sent ✓",
       emailSimulatedNote:
         "Simulation: no email was actually sent. This is a preview of what the winner would receive.",
       notifyFailed: "Could not send the email. Try again.",

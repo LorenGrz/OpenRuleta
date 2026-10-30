@@ -1,4 +1,8 @@
-import type { EmailMessage, WinnerParticipant } from "@openruleta/core";
+import type {
+  EmailMessage,
+  ParticipantInput,
+  WinnerParticipant,
+} from "@openruleta/core";
 
 export type Participant = WinnerParticipant;
 
@@ -13,6 +17,35 @@ export async function fetchParticipants(
   const res = await fetch("/api/participants", { cache: "no-store", signal });
   if (!res.ok) throw new Error(`GET /api/participants -> ${res.status}`);
   return (await res.json()) as ParticipantsResponse;
+}
+
+export type ImportResult = {
+  inserted: number;
+  duplicates: number;
+  /** Rows the server rejected on revalidation. */
+  invalid: number;
+};
+
+/** Bulk-adds participants (CSV import). Throws with the server's message when it sent one. */
+export async function importParticipants(
+  rows: ParticipantInput[],
+): Promise<ImportResult> {
+  const res = await fetch("/api/participants", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ rows }),
+  });
+  if (!res.ok) {
+    let message = `POST /api/participants -> ${res.status}`;
+    try {
+      const body = (await res.json()) as { error?: unknown };
+      if (typeof body.error === "string") message = body.error;
+    } catch {
+      // keep the status message
+    }
+    throw new Error(message);
+  }
+  return (await res.json()) as ImportResult;
 }
 
 export async function deleteParticipant(id: string): Promise<void> {

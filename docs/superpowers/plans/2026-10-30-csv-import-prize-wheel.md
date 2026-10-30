@@ -51,7 +51,7 @@ Los `worker` corren de a uno y en secuencia, porque las etapas comparten config 
 
 **Config (`form.docField`)**
 - `label`, `hint`, `placeholder` y `privacyNote` piden el documento completo, sin prometer lo contrario.
-- `maxLength: 20`, `pattern: "^[0-9A-Z]{6,20}$"`.
+- `pattern: "^[0-9A-Z]{6,20}$"`. Se quita `maxLength`: el patrón ya limita el valor normalizado.
 - `csv.headers` y `participantsHeaders`: `id_last_3` pasa a `document`.
 
 **Apps**

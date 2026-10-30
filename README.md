@@ -167,6 +167,9 @@ so its API can read, update and delete every participant. By default it is
   challenges **every** request — pages and API — with HTTP Basic Auth, so the
   service_role-backed routes are never open on the public URL. Use a strong
   password; add your host's rate limiting or an IP allow-list on top if you can.
+  `pnpm dev:ruleta` and `start` listen on `127.0.0.1` only (nobody on the same
+  Wi-Fi can reach them); hosting needs `next start -H 0.0.0.0` (plus the port
+  your host expects), always together with `RULETA_BASIC_AUTH`.
 
 Do not host the wheel without `RULETA_BASIC_AUTH` set.
 

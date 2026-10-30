@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev -p 3100",
+    "dev": "next dev -p 3100 -H 127.0.0.1",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -H 127.0.0.1",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "node --test \"src/**/*.test.ts\""

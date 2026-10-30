@@ -222,7 +222,8 @@ Uses the **service_role key** and its API routes (incl.
   `pnpm --filter @openruleta/ruleta`). Leave `RULETA_BASIC_AUTH` unset. Run it on
   the operator's laptop against the same Supabase project — it polls for new
   sign-ups every few seconds.
-- **Hosted.** Set `RULETA_BASIC_AUTH="user:password"` (plus the two Supabase
+- **Hosted.** The scripts bind `127.0.0.1`; hosting needs `next start -H 0.0.0.0`
+  **together with** `RULETA_BASIC_AUTH="user:password"` (plus the two Supabase
   vars). `apps/ruleta/src/proxy.ts` then challenges every request — pages and API.
   **Never host it without that.** Add host rate-limiting / IP allow-list on top.
 

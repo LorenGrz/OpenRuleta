@@ -170,6 +170,16 @@ so its API can read, update and delete every participant. By default it is
 
 Do not host the wheel without `RULETA_BASIC_AUTH` set.
 
+### Prize wheel mode
+
+Next to the raffle, the wheel app has a **Prize wheel** mode (toggle in the
+header) for a stand: it spins over a list of prizes (2 to 16), picks one by
+weight and shows it with confetti. There is no stock, no history and no
+database, so it works without Supabase. "Edit prizes" opens an editor (names up
+to 40 characters, integer weights 0-100; weight 0 keeps a prize on the wheel but
+it never comes up). The list lives in the browser's `localStorage`; the defaults
+and every text are in `siteConfig.ruleta.prizeWheel`.
+
 ## Make it yours
 
 Everything user-facing lives in **one file**:

@@ -61,6 +61,15 @@ type-checked. What lives here:
   (the winning moment in every mode) and `plinko.*` (`prizeLabel`, `outLabel`,
   `tickerHeading`, `boardAriaLabel`, `pegColor`, `ballColors`, `ballInk`).
   `wheelDurationMs` also paces the slot and grid modes.
+- `ruleta.prizeWheel.*` — the stand "Prize wheel" app mode (an alternative to the
+  raffle; no participants, no database): `title` (heading above the wheel),
+  `defaultPrizes[]` (`{ id, name, weight }`: unique ids, 2-16 prizes, at least one
+  weight above 0; weight 0 = shown but never wins), `segmentFills` `[even, odd,
+  last]` (the third colour only paints the last segment when the count is odd)
+  and `messages.*` (toggle, editor, validation and result texts). The operator
+  edits the live list from "Edit prizes" (name up to 40 characters, integer
+  weight 0-100); it is stored in `localStorage`, not in config. Keep the default
+  prizes generic, no real brands.
 - `ruleta.csv.{filenamePrefix,headers}` (winners export) and the participants
   export. CSV **import** (wheel menu → "Import CSV"): `importHeaders`,
   `importTemplateFilename`, `importTemplateRows` (fictitious example rows of the

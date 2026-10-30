@@ -17,4 +17,16 @@ See AGENTS.md for detected commands.
 - Owner: LorenGrz
 - Base branch: `master`. Single branch flow on `master`. See "Workflow contract" in AGENTS.md for the full picture and what's actually enforced.
 
-Last validated: 2026-10-10
+## Current state
+
+- `apps/ruleta` has two app modes, chosen by `useAppMode` (`localStorage`
+  `<slug>-ruleta-app-mode`) in `RuletaApp`: the raffle (`RuletaClient`) and the
+  stand prize wheel (`PrizeWheelClient`, no API, no polling).
+- Prize wheel: pure rules in `src/lib/prizes.ts` (`parsePrizes`,
+  `pickWeightedIndex`, editor validation), prizes in `localStorage`
+  (`usePrizes`), edited in `PrizesEditorModal`. Config under
+  `siteConfig.ruleta.prizeWheel`.
+- Draw modes receive `DrawEntry[]` (`{ id, name }`); `Wheel` takes optional
+  `fills`, `fullLabels` and `maxWidthClassName`.
+
+Last validated: 2026-10-30

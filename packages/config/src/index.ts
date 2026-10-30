@@ -161,6 +161,8 @@ export type PrizeWheelConfig = {
     /** Placeholder: {max}. */
     errorMaxPrizes: string;
     errorNoWeight: string;
+    /** Shown when no default/stored prize can win (a misconfigured list). */
+    noWinnablePrize: string;
   };
 };
 
@@ -561,6 +563,8 @@ export const siteConfig = defineSiteConfig({
         errorMinPrizes: "Add at least 2 prizes.",
         errorMaxPrizes: "No more than {max} prizes.",
         errorNoWeight: "At least one prize needs a weight above 0.",
+        noWinnablePrize:
+          "No prize can win: give at least one prize a weight above 0.",
       },
     },
     csv: {

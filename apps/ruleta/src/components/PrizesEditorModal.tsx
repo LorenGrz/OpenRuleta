@@ -4,6 +4,7 @@ import { useId, useRef, useState } from "react";
 
 import { siteConfig } from "@openruleta/config";
 
+import { createId } from "@/lib/id";
 import {
   MAX_NAME_LENGTH,
   MAX_PRIZES,
@@ -49,7 +50,7 @@ type Props = {
   prizes: Prize[];
   defaults: Prize[];
   onSave: (prizes: Prize[]) => void;
-  /** Resets the stored list to the defaults. */
+  /** Clears the stored list so the defaults apply (called on save). */
   onRestore: () => void;
   onClose: () => void;
 };
@@ -80,7 +81,7 @@ export function PrizesEditorModal({
 
   function add() {
     if (draft.length >= MAX_PRIZES) return;
-    const id = crypto.randomUUID();
+    const id = createId(globalThis.crypto);
     setDraft((rows) => [...rows, { id, name: "", weight: "1" }]);
   }
 
@@ -90,28 +91,29 @@ export function PrizesEditorModal({
 
   function restore() {
     if (!window.confirm(m.confirmRestore)) return;
-    onRestore();
+    // Only the draft changes; nothing is stored until "Save".
     setDraft(toDraft(defaults));
   }
 
   function save() {
     if (!validation.prizes) return;
-    onSave(validation.prizes);
+    // Saving the defaults clears the stored list instead of pinning a copy.
+    if (JSON.stringify(validation.prizes) === JSON.stringify(defaults)) {
+      onRestore();
+    } else {
+      onSave(validation.prizes);
+    }
     onClose();
   }
 
   return (
-    <div
-      onClick={onClose}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
-    >
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={hintId}
-        onClick={(e) => e.stopPropagation()}
         className="flex max-h-[90vh] w-full max-w-xl flex-col rounded-2xl border border-white/10 bg-[#1b1b1b] text-left shadow-2xl"
       >
         <header className="flex items-center justify-between gap-3 border-b border-white/10 px-6 py-4">

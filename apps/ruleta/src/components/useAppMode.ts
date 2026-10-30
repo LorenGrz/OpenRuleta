@@ -41,7 +41,9 @@ function writeMode(mode: AppMode): void {
   listeners.forEach((l) => l());
 }
 
-export function useAppMode(): [AppMode, (mode: AppMode) => void] {
-  const mode = useSyncExternalStore(subscribe, readMode, () => DEFAULT_MODE);
+/** `null` on the server and during hydration: the real mode is only known in
+ *  the browser, so callers must not mount a mode-specific client until then. */
+export function useAppMode(): [AppMode | null, (mode: AppMode) => void] {
+  const mode = useSyncExternalStore(subscribe, readMode, () => null);
   return [mode, writeMode];
 }

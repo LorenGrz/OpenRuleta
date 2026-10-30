@@ -23,8 +23,9 @@ const pw = siteConfig.ruleta.prizeWheel;
 const m = pw.messages;
 
 // Larger than the raffle wheel: there is no participants panel. Bounded by the
-// viewport height so title + wheel + Spin still fit.
-const WHEEL_SIZE = "max-w-[min(760px,calc(100dvh-22rem))]";
+// height of its own container (cqh), which is whatever is left between title
+// and buttons, so nothing overlaps at any window size.
+const WHEEL_SIZE = "max-w-[min(760px,calc(100cqh-16px))]";
 
 /**
  * Stand prize wheel: spins over the configured prizes, shows the result and
@@ -50,7 +51,8 @@ export function PrizeWheelClient() {
   const spinningRef = useRef(false);
 
   const modalOpen = result !== null || showEditor;
-  const canSpin = !spinning && !modalOpen;
+  const hasWinnable = prizes.some((p) => p.weight > 0);
+  const canSpin = !spinning && !modalOpen && hasWinnable;
   const drawInFlight = draw !== null && (spinning || result !== null);
 
   function spin() {
@@ -122,10 +124,10 @@ export function PrizeWheelClient() {
           <SponsorCarousel />
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 px-8 py-8">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 px-8 py-4">
           <h1 className="text-3xl font-bold text-white">{pw.title}</h1>
 
-          <div className="flex w-full flex-none items-center justify-center">
+          <div className="flex min-h-0 w-full flex-1 items-center justify-center [container-type:size]">
             <WheelMode
               pool={drawInFlight ? draw.pool : prizes}
               winnerIndex={drawInFlight ? draw.winnerIndex : null}
@@ -139,21 +141,28 @@ export function PrizeWheelClient() {
             />
           </div>
 
-          <div className="flex flex-col items-center gap-3">
-            <button
-              onClick={spin}
-              disabled={!canSpin}
-              className="rounded-pill bg-primary px-14 py-4 text-sm font-semibold uppercase tracking-wider text-white shadow-lg transition hover:scale-105 hover:bg-primary-hover active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
-            >
-              {spinning ? m.spinning : m.spin}
-            </button>
-            <button
-              onClick={() => setShowEditor(true)}
-              disabled={!canSpin}
-              className="text-sm text-white/40 underline transition hover:text-white disabled:opacity-40"
-            >
-              {m.editPrizes}
-            </button>
+          <div className="flex flex-none flex-col items-center gap-2">
+            {!hasWinnable && (
+              <p role="alert" className="text-sm text-error">
+                {m.noWinnablePrize}
+              </p>
+            )}
+            <div className="flex items-center gap-6">
+              <button
+                onClick={spin}
+                disabled={!canSpin}
+                className="rounded-pill bg-primary px-14 py-4 text-sm font-semibold uppercase tracking-wider text-white shadow-lg transition hover:scale-105 hover:bg-primary-hover active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
+              >
+                {spinning ? m.spinning : m.spin}
+              </button>
+              <button
+                onClick={() => setShowEditor(true)}
+                disabled={spinning || modalOpen}
+                className="text-sm text-white/40 underline transition hover:text-white disabled:opacity-40"
+              >
+                {m.editPrizes}
+              </button>
+            </div>
           </div>
         </div>
 

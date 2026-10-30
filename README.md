@@ -114,9 +114,12 @@ Open the form, sign up a few test people, then open the wheel and spin.
 
 ## Deploying the form for a real event
 
-**Run `supabase/schema.sql` first, before deploying** (it is additive and
-idempotent). It adds the `document` column; without it the form's insert and the
-wheel's participant list both fail.
+**Run `supabase/schema.sql` first, before deploying** (it is idempotent). It adds
+the `document` column; without it the form's insert and the wheel's participant
+list both fail. It also moves the anon `INSERT` grant from `doc_last3` to
+`document`, so the previous form deployment stops accepting sign-ups between the
+SQL and the deploy: do not migrate while sign-ups are open. Rolling back needs
+the grant restored (`grant insert (name, email, doc_last3) ...`).
 
 `apps/form` is the deployable half. On **Vercel**:
 
@@ -138,8 +141,8 @@ During the event, run `apps/ruleta` locally against the **same** Supabase
 project — it picks up new sign-ups automatically (it polls every few seconds).
 
 The form stores the participant's full ID number. After the event, export the
-CSVs and **delete the participants** (reset/delete in the wheel or `delete from
-public.participants`), then pause the projects.
+CSVs and **delete the participants** ("Delete all participants" in the wheel menu or
+`delete from public.participants`), then pause the projects.
 
 ## Running the wheel: local or hosted
 

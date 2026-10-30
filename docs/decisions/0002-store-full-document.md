@@ -26,6 +26,6 @@ Exposure is limited: the projected screens (`WinnerModal`, `ParticipantsPanel`, 
 ## Consequences
 
 - The database now holds personal data: delete participants after the event and pause the projects.
-- Existing databases need the additive `schema.sql` run before the new version is deployed; otherwise the form insert and the wheel list fail.
+- Existing databases need `schema.sql` run before the new version is deployed; otherwise the form insert and the wheel list fail. The script moves the anon insert grant from `doc_last3` to `document`, so the old form stops accepting sign-ups between the SQL and the deploy: do not migrate while sign-ups are open. A rollback requires restoring the `doc_last3` grant.
 - Old mock-store files and rows keep working through the `doc_last3` fallback.
 - Revisit if events need to retain data longer (retention policy) or if a legal basis beyond the raffle is required.

@@ -50,7 +50,7 @@ type-checked. What lives here:
   full value appears only in the CSV exports). Set `enabled: false` to drop it
   entirely (the DB column then stays null — no schema change needed). Otherwise
   tune `label`, `hint`, `pattern` (regex source, no slashes, matched against the
-  normalized value), `maxLength`, `displayLabel`, `maskGlyph`.
+  normalized value, so it also caps the length), `displayLabel`, `maskGlyph`.
 - `form.nameMinLength`.
 - `ruleta.meta.*`, `ruleta.defaultTitle` (first-run wheel title).
 - `ruleta.wheelSpins`, `ruleta.wheelDurationMs` (keep in sync with the CSS
@@ -203,7 +203,10 @@ Uses the **service_role key** and its API routes (incl.
 3. Customize — §1 config (incl. `poster.*`), §2 theme, §3 assets.
 4. Supabase: new project → run `supabase/schema.sql` in the SQL Editor. On an
    existing project, run it **before** deploying this version: without the
-   `document` column the form and the wheel's list fail.
+   `document` column the form and the wheel's list fail. It moves the anon
+   insert grant from `doc_last3` to `document`, so the old form stops accepting
+   sign-ups between the SQL and the deploy: don't migrate with sign-ups open.
+   A rollback needs the `doc_last3` grant restored.
 5. Vercel: `pnpm dlx vercel link` → **Root Directory** `apps/form`, function
    region `gru1` (or the one closest to the Supabase project), env
    `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_ANON_KEY` → deploy.

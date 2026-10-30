@@ -12,8 +12,8 @@ restricts to `INSERT` only. Safe to deploy publicly (Vercel, etc.).
   returns a fake success and saves nothing.
 - **One entry per device** — a soft `localStorage` guard that only hides the
   form. The real control is the unique index above.
-- Only the configured document digits are stored, never a full ID number (and
-  the field can be turned off entirely in `packages/config`).
+- The full document is stored, normalized (personal data); see ADR 0002. It can
+  be turned off in `packages/config`.
 
 ## Env (`.env.local` in this directory)
 

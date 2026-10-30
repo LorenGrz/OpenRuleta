@@ -2,7 +2,7 @@ import { isTransientDbError, withRetry, type RetryOptions } from "./retry.ts";
 import type { ParticipantInput } from "./types.ts";
 
 /** Rows per query: keeps the `.in()` URL and the insert payload small. */
-export const BATCH_SIZE = 200;
+export const BATCH_SIZE = 100;
 
 /** Upper bound of rows accepted by one import request. */
 export const MAX_IMPORT_ROWS = 10_000;
@@ -11,7 +11,9 @@ export type BatchResult = { inserted: number; duplicates: number };
 
 /** Minimal database surface the batch import needs (faked in tests). */
 export type BatchDb = {
-  /** Which of `emails` are already registered (any letter case). */
+  /** Which of the (lowercased) `emails` are already registered. The real
+   *  lookup is case-sensitive, so mixed-case rows can be missed; the unique
+   *  index (23505 fallback) is the safety net. */
   existingEmails(emails: string[]): Promise<string[]>;
   /** Inserts new participants (won_at null). Throws on any DB error. */
   insert(rows: ParticipantInput[]): Promise<void>;
@@ -24,6 +26,18 @@ export function isUniqueViolation(err: unknown): boolean {
     "code" in err &&
     (err as { code?: unknown }).code === "23505"
   );
+}
+
+/**
+ * Value of a PostgREST `in` filter: `("a","b")`. Every value is quoted with
+ * `\` and `"` escaped, because postgrest-js' `.in()` does not escape them and
+ * an email like `a,b"c@x.com` would produce an invalid filter.
+ */
+export function buildInFilter(values: readonly string[]): string {
+  const quoted = values.map(
+    (v) => `"${v.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`,
+  );
+  return `(${quoted.join(",")})`;
 }
 
 export function emailKey(email: string): string {

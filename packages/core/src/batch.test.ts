@@ -4,8 +4,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, beforeEach, test } from "node:test";
 
-import { BATCH_SIZE, insertParticipantsBatch, type BatchDb } from "./batch.ts";
-import { fetchAllPages } from "./pagination.ts";
+import {
+  BATCH_SIZE,
+  buildInFilter,
+  insertParticipantsBatch,
+  type BatchDb,
+} from "./batch.ts";
+import { fetchAllPages, uniqueById } from "./pagination.ts";
 import type { ParticipantInput } from "./types.ts";
 
 // Must be set before mock-store.ts is first loaded: it reads the path once.
@@ -198,7 +203,7 @@ test("insertParticipantsBatch: retries a transient error then succeeds", async (
 
 // ── pagination ─────────────────────────────────────────────────────────────
 
-test("fetchAllPages: reads pages until a short one, in order", async () => {
+test("fetchAllPages: reads pages until an empty one, in order", async () => {
   const data = Array.from({ length: 25 }, (_, i) => i);
   const ranges: [number, number][] = [];
   const out = await fetchAllPages(async (from, to) => {
@@ -210,6 +215,7 @@ test("fetchAllPages: reads pages until a short one, in order", async () => {
     [0, 9],
     [10, 19],
     [20, 29],
+    [25, 34],
   ]);
 });
 
@@ -232,4 +238,51 @@ test("fetchAllPages: returns [] for an empty table and propagates errors", async
     }),
     /boom/,
   );
+});
+
+test("fetchAllPages: a server capped below pageSize still returns every row", async () => {
+  const data = Array.from({ length: 10 }, (_, i) => i);
+  const out = await fetchAllPages(
+    // Like PostgREST max-rows = 3: never more than 3 rows per response.
+    async (from, to) => data.slice(from, to + 1).slice(0, 3),
+    10,
+  );
+  assert.deepEqual(out, data);
+});
+
+test("uniqueById: keeps the first row of a repeated id", () => {
+  const rows = [
+    { id: "a", n: 1 },
+    { id: "b", n: 2 },
+    { id: "a", n: 3 },
+  ];
+  assert.deepEqual(uniqueById(rows), [
+    { id: "a", n: 1 },
+    { id: "b", n: 2 },
+  ]);
+});
+
+test("buildInFilter: quotes every value and escapes quotes and backslashes", () => {
+  assert.equal(buildInFilter(["a@x.com", "b@x.com"]), '("a@x.com","b@x.com")');
+  assert.equal(buildInFilter(['a,b"c@x.com']), '("a,b\\"c@x.com")');
+  assert.equal(buildInFilter(["a\\b@x.com"]), '("a\\\\b@x.com")');
+  assert.equal(buildInFilter(["a(b)@x.com"]), '("a(b)@x.com")');
+});
+
+test("insertParticipantsBatch: a mixed-case row the lookup misses is counted as duplicate on 23505", async () => {
+  // The real lookup is case-sensitive: "Mixed@x.com" is stored but the search
+  // for "mixed@x.com" does not find it, so the insert hits the unique index.
+  const db = fakeDb({
+    insert(rows) {
+      if (rows.some((r) => r.email === "mixed@x.com")) {
+        throw Object.assign(new Error("dup"), { code: "23505" });
+      }
+    },
+  });
+  const out = await insertParticipantsBatch(
+    db,
+    [{ name: "Mixed", email: "mixed@x.com", document: "DOC123456" }],
+    noSleep,
+  );
+  assert.deepEqual(out, { inserted: 0, duplicates: 1 });
 });

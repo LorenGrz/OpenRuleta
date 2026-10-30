@@ -1,10 +1,11 @@
 import {
+  buildInFilter,
   insertParticipantsBatch,
   isUniqueViolation,
   type BatchResult,
 } from "./batch.ts";
 import { isMockDb } from "./mock-db.ts";
-import { fetchAllPages } from "./pagination.ts";
+import { fetchAllPages, uniqueById } from "./pagination.ts";
 import { getSupabaseClient } from "./supabase.ts";
 import { isTransientDbError, withRetry } from "./retry.ts";
 import {
@@ -133,7 +134,7 @@ export async function listParticipants(): Promise<WinnerParticipant[]> {
     if (error) throw error;
     return data ?? [];
   });
-  return rows.map(toWinnerParticipant);
+  return uniqueById(rows).map(toWinnerParticipant);
 }
 
 /**
@@ -153,7 +154,7 @@ export async function addParticipantsBatch(
         const { data, error, status } = await supabase
           .from("participants")
           .select("email")
-          .in("email", emails)
+          .filter("email", "in", buildInFilter(emails))
           .returns<{ email: string }[]>();
         if (error) throw Object.assign(error, { status });
         return (data ?? []).map((r) => r.email);

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { toCsv } from "./csv.ts";
+import { decodeCsvBytes, parseCsv, toCsv } from "./csv.ts";
 
 test("toCsv: joins headers and rows with a leading BOM", () => {
   // Happy path: Excel needs the BOM to detect UTF-8, and plain values must
@@ -61,4 +61,56 @@ test("toCsv: neutralizes a cell that starts with a tab", () => {
   // one of the original = + - @ prefixes.
   const csv = toCsv(["name"], [["\t=1+1"]]);
   assert.equal(csv, "﻿name\n'\t=1+1\n");
+});
+
+test("parseCsv: parses plain rows with line numbers and CRLF", () => {
+  const { records, delimiter } = parseCsv("a,b\r\n1,2\r\n3,4\r\n");
+  assert.equal(delimiter, ",");
+  assert.deepEqual(records, [
+    { line: 1, cells: ["a", "b"] },
+    { line: 2, cells: ["1", "2"] },
+    { line: 3, cells: ["3", "4"] },
+  ]);
+});
+
+test("parseCsv: strips a BOM and handles quotes, escaped quotes and embedded breaks", () => {
+  const { records } = parseCsv(
+    '\uFEFFname,note\n"Doe, ""A""","x\ny"\nlast,z\n',
+  );
+  assert.deepEqual(records, [
+    { line: 1, cells: ["name", "note"] },
+    { line: 2, cells: ['Doe, "A"', "x\ny"] },
+    { line: 4, cells: ["last", "z"] },
+  ]);
+});
+
+test("parseCsv: detects semicolon and tab delimiters from the header", () => {
+  assert.equal(parseCsv("a;b;c\n1;2;3").delimiter, ";");
+  assert.deepEqual(parseCsv("a;b;c\n1;2;3").records[1].cells, ["1", "2", "3"]);
+  assert.equal(parseCsv("a\tb\n1\t2").delimiter, "\t");
+  assert.equal(parseCsv('"a;b",c\n1,2').delimiter, ",");
+});
+
+test("parseCsv: keeps blank lines as records and counts lone CR as a line break", () => {
+  const { records } = parseCsv("a,b\r\r1,2");
+  assert.deepEqual(records, [
+    { line: 1, cells: ["a", "b"] },
+    { line: 2, cells: [""] },
+    { line: 3, cells: ["1", "2"] },
+  ]);
+});
+
+test("parseCsv: returns no records for empty input and keeps a last row without newline", () => {
+  assert.deepEqual(parseCsv("").records, []);
+  assert.deepEqual(parseCsv("a,b\n1,").records[1].cells, ["1", ""]);
+});
+
+test("decodeCsvBytes: decodes valid UTF-8", () => {
+  assert.equal(decodeCsvBytes(new TextEncoder().encode("María")), "María");
+});
+
+test("decodeCsvBytes: falls back to windows-1252 for invalid UTF-8", () => {
+  // "María" in windows-1252: the i-acute is the single byte 0xED.
+  const bytes = new Uint8Array([0x4d, 0x61, 0x72, 0xed, 0x61]);
+  assert.equal(decodeCsvBytes(bytes), "María");
 });

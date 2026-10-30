@@ -145,7 +145,9 @@ Besides the public form, the operator can load participants from a CSV
 and `document` (comma, semicolon or tab separated; UTF-8 or Excel's
 windows-1252), review the preview and import. Rows with an email that already
 exists are skipped, and winners are never touched. A participants export can be
-re-imported.
+re-imported. Files with more than 10,000 valid rows are rejected (split them). If the
+connection drops mid-import, retry: rows already imported are skipped and shown as
+"already existed".
 
 The form stores the participant's full ID number. After the event, export the
 CSVs and **delete the participants** ("Delete all participants" in the wheel menu or

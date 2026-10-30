@@ -331,6 +331,7 @@ export type SiteConfig = {
       importFileHint: string;
       importDownloadTemplate: string;
       importReading: string;
+      importReadFailed: string;
       importFileTooLarge: string;
       importTooManyRows: string;
       importMissingColumns: string;
@@ -348,6 +349,7 @@ export type SiteConfig = {
       importInvalidBody: string;
       importRouteTooMany: string;
       importRouteFailed: string;
+      importUnsupportedType: string;
     };
   };
 
@@ -600,6 +602,7 @@ export const siteConfig = defineSiteConfig({
         "Columns: name, email and document. Rows whose email already exists are skipped; winners are never changed.",
       importDownloadTemplate: "Download template",
       importReading: "Reading file…",
+      importReadFailed: "Could not read the file.",
       importFileTooLarge: "The file is larger than 5 MB.",
       importTooManyRows: "Too many rows: at most {n} can be imported at once.",
       importMissingColumns: "Missing columns: {columns}.",
@@ -613,10 +616,12 @@ export const siteConfig = defineSiteConfig({
       importing: "Importing…",
       importDone:
         "Done: {inserted} imported, {duplicates} already existed, {invalid} rejected.",
-      importFailed: "Could not import the participants. Try again.",
+      importFailed:
+        "The import failed, but some rows may already have been imported. Try again: rows already imported are skipped, so retrying is safe.",
       importInvalidBody: "Invalid request.",
       importRouteTooMany: "Too many rows (max. {n}).",
       importRouteFailed: "Could not import the participants.",
+      importUnsupportedType: "Unsupported content type.",
     },
   },
 

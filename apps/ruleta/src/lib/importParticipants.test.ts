@@ -180,3 +180,14 @@ test("buildImportTemplate: the downloaded template imports without errors", () =
   assert.equal(out.valid.length, csvConfig.importTemplateRows.length);
   assert.ok(out.valid.every((p) => p.email.endsWith("@example.com")));
 });
+
+test("mapImportRows: emails differing only in case are the same person", () => {
+  const out = mapImportRows(
+    "name,email,document\nAna,A@x.com,30123456\nAna Dos,a@x.com,30123457\n",
+    rules,
+  );
+  assert.deepEqual(out.valid, [
+    { name: "Ana", email: "a@x.com", document: "30123456" },
+  ]);
+  assert.equal(out.duplicatesInFile, 1);
+});

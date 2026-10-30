@@ -54,7 +54,8 @@ const DELIMITERS = [",", ";", "\t"] as const;
 function detectDelimiter(text: string): string {
   const counts = new Map<string, number>(DELIMITERS.map((d) => [d, 0]));
   let inQuotes = false;
-  for (const ch of text) {
+  // Skip leading blank lines: the header is the first non-empty line.
+  for (const ch of text.replace(/^(?:[ \t]*[\r\n])+/, "")) {
     if (ch === '"') inQuotes = !inQuotes;
     else if (!inQuotes && (ch === "\n" || ch === "\r")) break;
     else if (!inQuotes && counts.has(ch)) counts.set(ch, counts.get(ch)! + 1);

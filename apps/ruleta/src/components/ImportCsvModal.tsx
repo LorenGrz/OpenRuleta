@@ -20,6 +20,9 @@ const csv = siteConfig.ruleta.csv;
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const PREVIEW_ERRORS = 20;
 
+// Position of each field in `csv.importHeaders`.
+const FIELD_HEADER_INDEX = { name: 0, email: 1, document: 2 } as const;
+
 const FOCUS_RING =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
 
@@ -55,6 +58,8 @@ export function ImportCsvModal({ onClose, onImport }: Props) {
   const [preview, setPreview] = useState<ImportMapping | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
+  // Id of the latest file read: results of an older, slower read are dropped.
+  const readIdRef = useRef(0);
 
   useEffect(() => {
     const previous =
@@ -92,7 +97,12 @@ export function ImportCsvModal({ onClose, onImport }: Props) {
   }, [onClose, importing]);
 
   async function handleFile(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+    const input = e.target;
+    const file = input.files?.[0];
+    // Clear the value so picking the same file again fires onChange.
+    input.value = "";
+    const readId = ++readIdRef.current;
+    setReading(false);
     setPreview(null);
     setResult(null);
     setError(null);
@@ -104,6 +114,7 @@ export function ImportCsvModal({ onClose, onImport }: Props) {
     setReading(true);
     try {
       const text = decodeCsvBytes(await file.arrayBuffer());
+      if (readId !== readIdRef.current) return;
       const mapping = mapImportRows(text, importRules);
       if (mapping.valid.length > MAX_IMPORT_ROWS) {
         setError(fill(m.importTooManyRows, { n: MAX_IMPORT_ROWS }));
@@ -111,9 +122,9 @@ export function ImportCsvModal({ onClose, onImport }: Props) {
         setPreview(mapping);
       }
     } catch {
-      setError(m.importFailed);
+      if (readId === readIdRef.current) setError(m.importReadFailed);
     } finally {
-      setReading(false);
+      if (readId === readIdRef.current) setReading(false);
     }
   }
 
@@ -217,7 +228,9 @@ export function ImportCsvModal({ onClose, onImport }: Props) {
           {preview && preview.missingColumns.length > 0 && (
             <p role="alert" className="text-sm text-error">
               {fill(m.importMissingColumns, {
-                columns: preview.missingColumns.join(", "),
+                columns: preview.missingColumns
+                  .map((f) => csv.importHeaders[FIELD_HEADER_INDEX[f]])
+                  .join(", "),
               })}
             </p>
           )}

@@ -114,3 +114,9 @@ test("decodeCsvBytes: falls back to windows-1252 for invalid UTF-8", () => {
   const bytes = new Uint8Array([0x4d, 0x61, 0x72, 0xed, 0x61]);
   assert.equal(decodeCsvBytes(bytes), "María");
 });
+
+test("parseCsv: skips leading blank lines when detecting the delimiter", () => {
+  const { delimiter, records } = parseCsv("\n\na;b\n1;2");
+  assert.equal(delimiter, ";");
+  assert.deepEqual(records.at(-1), { line: 4, cells: ["1", "2"] });
+});

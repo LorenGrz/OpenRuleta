@@ -55,6 +55,14 @@ export async function DELETE(request: Request) {
 
 /** CSV import: `{ rows }` -> `{ inserted, duplicates, invalid }`. */
 export async function POST(request: Request) {
+  // Only JSON: a cross-site <form> can send text/plain or urlencoded bodies
+  // without a CORS preflight, so refuse anything else before reading it.
+  if (!request.headers.get("content-type")?.startsWith("application/json")) {
+    return NextResponse.json(
+      { error: m.importUnsupportedType },
+      { status: 415 },
+    );
+  }
   let body: unknown;
   try {
     body = await request.json();

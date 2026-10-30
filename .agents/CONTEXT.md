@@ -26,6 +26,11 @@ See AGENTS.md for detected commands.
   `pickWeightedIndex`, editor validation), prizes in `localStorage`
   (`usePrizes`), edited in `PrizesEditorModal`. Config under
   `siteConfig.ruleta.prizeWheel`.
+- Participants can be bulk-imported from CSV (`/api/participants` import,
+  `ImportCsvModal`, batches of 100). The form stores the full document
+  (ADR 0002); it reaches the operator's browser via the local API and is only
+  rendered in the CSV exports. The wheel app binds `127.0.0.1`.
+- Skipped participants (`skipIds`) live in `RuletaApp` so they survive a mode switch.
 - Draw modes receive `DrawEntry[]` (`{ id, name }`); `Wheel` takes optional
   `fills`, `fullLabels` and `maxWidthClassName`.
 

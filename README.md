@@ -67,6 +67,10 @@ The mock activates automatically whenever `NEXT_PUBLIC_SUPABASE_URL` is unset.
 Force it either way with `OPENRULETA_MOCK_DB=1` (always mock) or `=0` (always
 require Supabase). It's a dev aid only — for a real event, set up Supabase below.
 
+**Do not import or enter real participant data (CSV import, form) while Supabase
+is not configured:** the mock store writes it, full documents included, to a
+plain JSON file in your OS temp directory.
+
 ## Setup
 
 You need Node 20+, [pnpm](https://pnpm.io) 9+, and a Supabase project.
@@ -212,7 +216,8 @@ spins, and `notified_at` when the winner email is sent (real over SMTP if `SMTP_
 clears all three. Existing databases: re-run `supabase/schema.sql` to add
 `notified_at` (additive, idempotent) before deploying this version. The wheel resolves a spin against a frozen copy
 of the list, and pauses polling while it spins or a modal is open, so a
-background refresh can't shift the result mid-animation.
+background refresh can't shift the result mid-animation. The prize wheel mode
+stores nothing in the database (its prizes live in the browser's `localStorage`).
 
 ## Commands
 

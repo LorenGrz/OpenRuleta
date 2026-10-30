@@ -1,4 +1,10 @@
+import {
+  insertParticipantsBatch,
+  isUniqueViolation,
+  type BatchResult,
+} from "./batch.ts";
 import { isMockDb } from "./mock-db.ts";
+import { fetchAllPages } from "./pagination.ts";
 import { getSupabaseClient } from "./supabase.ts";
 import { isTransientDbError, withRetry } from "./retry.ts";
 import {
@@ -32,15 +38,6 @@ export class NotAWinnerError extends Error {
     super("Participant has not won.");
     this.name = "NotAWinnerError";
   }
-}
-
-function isUniqueViolation(err: unknown): boolean {
-  return (
-    typeof err === "object" &&
-    err !== null &&
-    "code" in err &&
-    (err as { code?: unknown }).code === "23505"
-  );
 }
 
 function cleanPrize(prize: string | null | undefined): string | null {
@@ -123,14 +120,58 @@ export async function listParticipants(): Promise<WinnerParticipant[]> {
   }
 
   const supabase = getSupabaseClient(true);
-  const { data, error } = await supabase
-    .from("participants")
-    .select(PARTICIPANT_COLUMNS)
-    .order("created_at", { ascending: true })
-    .returns<ParticipantRow[]>();
+  // Paginated: PostgREST truncates one response at 1000 rows. `id` breaks ties
+  // because an imported batch shares one created_at.
+  const rows = await fetchAllPages<ParticipantRow>(async (from, to) => {
+    const { data, error } = await supabase
+      .from("participants")
+      .select(PARTICIPANT_COLUMNS)
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, to)
+      .returns<ParticipantRow[]>();
+    if (error) throw error;
+    return data ?? [];
+  });
+  return rows.map(toWinnerParticipant);
+}
 
-  if (error) throw error;
-  return (data ?? []).map(toWinnerParticipant);
+/**
+ * Bulk-adds participants (CSV import) with the service_role key. Existing
+ * emails are skipped, never overwritten, so winners are untouched. Repeats in
+ * `inputs` count as duplicates.
+ */
+export async function addParticipantsBatch(
+  inputs: readonly ParticipantInput[],
+): Promise<BatchResult> {
+  if (isMockDb()) return (await loadMockStore()).mockAddParticipants(inputs);
+
+  const supabase = getSupabaseClient(true);
+  return insertParticipantsBatch(
+    {
+      async existingEmails(emails) {
+        const { data, error, status } = await supabase
+          .from("participants")
+          .select("email")
+          .in("email", emails)
+          .returns<{ email: string }[]>();
+        if (error) throw Object.assign(error, { status });
+        return (data ?? []).map((r) => r.email);
+      },
+      async insert(rows) {
+        const { error, status } = await supabase.from("participants").insert(
+          rows.map((r) => ({
+            name: r.name,
+            email: r.email,
+            document: r.document ? r.document : null,
+            won_at: null,
+          })),
+        );
+        if (error) throw Object.assign(error, { status });
+      },
+    },
+    inputs,
+  );
 }
 
 /** One participant by id, or `null` when the id matches nobody. */

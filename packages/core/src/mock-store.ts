@@ -159,6 +159,38 @@ export function mockAddParticipant(input: {
   write(store);
 }
 
+/**
+ * Bulk insert with a single file write. Skips emails that already exist or
+ * repeat inside `inputs` (counted as duplicates); never touches existing rows.
+ */
+export function mockAddParticipants(
+  inputs: readonly { name: string; email: string; document: string }[],
+): { inserted: number; duplicates: number } {
+  const store = read();
+  const known = new Set(store.participants.map((p) => p.email.toLowerCase()));
+  const createdAt = new Date().toISOString();
+  let inserted = 0;
+  for (const input of inputs) {
+    const email = input.email.toLowerCase();
+    if (known.has(email)) continue;
+    known.add(email);
+    store.participants.push({
+      id: randomUUID(),
+      name: input.name,
+      email: input.email,
+      doc_last3: null,
+      document: input.document ? input.document : null,
+      created_at: createdAt,
+      won_at: null,
+      prize: null,
+      notified_at: null,
+    });
+    inserted++;
+  }
+  if (inserted > 0) write(store);
+  return { inserted, duplicates: inputs.length - inserted };
+}
+
 /** Returns the row, or `null` when the id matches nobody. */
 export function mockGetParticipant(id: string): ParticipantRow | null {
   return read().participants.find((p) => p.id === id) ?? null;

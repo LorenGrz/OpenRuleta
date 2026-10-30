@@ -12,10 +12,11 @@ import { Wordmark } from "@openruleta/ui";
 
 import { submitParticipant } from "@/lib/api";
 
-type Fields = { name: string; email: string; docLast3: string };
-type Stored = { name: string; docLast3: string };
+type Fields = { name: string; email: string; document: string };
+// Only the last 3 characters of the document are kept on the device.
+type Stored = { name: string; docTail: string };
 
-const EMPTY: Fields = { name: "", email: "", docLast3: "" };
+const EMPTY: Fields = { name: "", email: "", document: "" };
 const STORAGE_KEY = `${siteConfig.slug}-form-entry`;
 const m = siteConfig.form.messages;
 const doc = siteConfig.form.docField;
@@ -29,8 +30,8 @@ function readStored(): Stored | null {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const p = JSON.parse(raw) as Partial<Stored>;
-    if (typeof p.name === "string" && typeof p.docLast3 === "string") {
-      return { name: p.name, docLast3: p.docLast3 };
+    if (typeof p.name === "string" && typeof p.docTail === "string") {
+      return { name: p.name, docTail: p.docTail };
     }
   } catch {
     // localStorage unavailable (private mode, blocked): fail open.
@@ -91,7 +92,7 @@ export function RaffleForm() {
     if (res.ok) {
       const stored: Stored = {
         name: res.participant.name || result.data.name,
-        docLast3: res.participant.docLast3 || result.data.docLast3,
+        docTail: (res.participant.document || result.data.document).slice(-3),
       };
       writeStored(stored);
       setDone(stored);
@@ -102,7 +103,7 @@ export function RaffleForm() {
   }
 
   if (done) {
-    return <SuccessTicket name={done.name} docLast3={done.docLast3} />;
+    return <SuccessTicket name={done.name} docTail={done.docTail} />;
   }
 
   return (
@@ -163,23 +164,26 @@ export function RaffleForm() {
           <Field
             id={`${uid}-doc`}
             label={doc.label}
-            error={errors.docLast3}
+            error={errors.document}
             hint={doc.hint}
           >
             <input
               id={`${uid}-doc`}
               type="text"
-              inputMode="numeric"
+              inputMode="text"
+              autoCapitalize="characters"
               maxLength={doc.maxLength}
               placeholder={doc.placeholder}
-              value={fields.docLast3}
+              value={fields.document}
               onChange={(e) =>
                 update(
-                  "docLast3",
-                  e.target.value.replace(/\D/g, "").slice(0, doc.maxLength),
+                  "document",
+                  e.target.value
+                    .replace(/[^0-9A-Za-z.\s-]/g, "")
+                    .slice(0, doc.maxLength),
                 )
               }
-              className={inputClass(errors.docLast3)}
+              className={inputClass(errors.document)}
             />
           </Field>
         )}
@@ -251,7 +255,7 @@ function Field({
   );
 }
 
-function SuccessTicket({ name, docLast3 }: { name: string; docLast3: string }) {
+function SuccessTicket({ name, docTail }: { name: string; docTail: string }) {
   return (
     <div className="flex w-full max-w-[480px] flex-col items-center rounded-3xl bg-surface p-7 text-center shadow-[0_20px_60px_rgba(0,30,80,0.25)]">
       <div className="mb-4 grid h-14 w-14 place-items-center rounded-full bg-primary/10">
@@ -274,9 +278,9 @@ function SuccessTicket({ name, docLast3 }: { name: string; docLast3: string }) {
           {m.ticketLabel}
         </p>
         <p className="mt-2 text-xl font-bold text-primary">{name}</p>
-        {doc.enabled && docLast3 && (
+        {doc.enabled && docTail && (
           <p className="font-mono text-sm text-slate-600">
-            {doc.displayLabel} {maskDoc(docLast3, doc.maskGlyph)}
+            {doc.displayLabel} {maskDoc(docTail, doc.maskGlyph)}
           </p>
         )}
         <div className="mt-4 flex items-center justify-between border-t border-dashed border-input-border pt-4">

@@ -74,7 +74,7 @@ export async function addParticipant(
       id: "",
       name: input.name,
       email: input.email,
-      docLast3: input.docLast3,
+      document: input.document,
       createdAt: new Date().toISOString(),
     };
   }
@@ -87,7 +87,7 @@ export async function addParticipant(
         const { error, status } = await supabase.from("participants").insert({
           name: input.name,
           email: input.email,
-          doc_last3: input.docLast3 ? input.docLast3 : null,
+          document: input.document ? input.document : null,
         });
         // supabase-js returns Postgres/PostgREST errors instead of throwing;
         // rethrow (with the HTTP status attached) so withRetry can classify.
@@ -107,7 +107,7 @@ export async function addParticipant(
     id: "",
     name: input.name,
     email: input.email,
-    docLast3: input.docLast3,
+    document: input.document,
     createdAt: new Date().toISOString(),
   };
 }

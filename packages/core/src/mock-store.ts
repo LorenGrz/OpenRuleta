@@ -67,7 +67,8 @@ function seed(): Store {
       id: randomUUID(),
       name,
       email: `${slugify(name)}@example.com`,
-      doc_last3: String(100 + ((i * 137) % 900)),
+      doc_last3: null,
+      document: String(20_000_000 + ((i * 1_370_137) % 30_000_000)),
       created_at: new Date(
         now - (SEED_NAMES.length - i) * 90_000,
       ).toISOString(),
@@ -135,7 +136,7 @@ export function mockListParticipants(): ParticipantRow[] {
 export function mockAddParticipant(input: {
   name: string;
   email: string;
-  docLast3: string;
+  document: string;
 }): void {
   const store = read();
   const email = input.email.toLowerCase();
@@ -148,7 +149,8 @@ export function mockAddParticipant(input: {
     id: randomUUID(),
     name: input.name,
     email: input.email,
-    doc_last3: input.docLast3 ? input.docLast3 : null,
+    doc_last3: null,
+    document: input.document ? input.document : null,
     created_at: new Date().toISOString(),
     won_at: null,
     prize: null,

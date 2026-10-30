@@ -46,7 +46,9 @@ export function ParticipantsPanel({
     const q = query.trim().toLowerCase();
     if (!q) return ordered;
     return ordered.filter(
-      (p) => p.name.toLowerCase().includes(q) || p.docLast3.includes(q),
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.document.slice(-3).toLowerCase().includes(q),
     );
   }, [ordered, query]);
 
@@ -136,9 +138,9 @@ export function ParticipantsPanel({
                       </span>
                     )}
                   </p>
-                  {doc.enabled && p.docLast3 && (
+                  {doc.enabled && p.document && (
                     <p className="font-mono text-xs text-white/40">
-                      {doc.displayLabel} {maskDoc(p.docLast3, doc.maskGlyph)}
+                      {doc.displayLabel} {maskDoc(p.document, doc.maskGlyph)}
                     </p>
                   )}
                 </div>

@@ -45,10 +45,12 @@ type-checked. What lives here:
 - `form.meta.*` — `<title>`, description, Open Graph.
 - `form.messages.*` — every string the form renders, including validation and
   server errors. Default language is English; translate in place.
-- `form.docField` — the "last 3 digits of ID" field. Set `enabled: false` to drop
-  it entirely (the DB column then stays null — no schema change needed). Otherwise
-  tune `label`, `hint`, `pattern` (regex source, no slashes), `maxLength`,
-  `displayLabel`, `maskGlyph`.
+- `form.docField` — the full ID document field (stored normalized: no dots,
+  spaces or dashes, uppercase; shown masked, last 3 characters, on screen — the
+  full value appears only in the CSV exports). Set `enabled: false` to drop it
+  entirely (the DB column then stays null — no schema change needed). Otherwise
+  tune `label`, `hint`, `pattern` (regex source, no slashes, matched against the
+  normalized value), `maxLength`, `displayLabel`, `maskGlyph`.
 - `form.nameMinLength`.
 - `ruleta.meta.*`, `ruleta.defaultTitle` (first-run wheel title).
 - `ruleta.wheelSpins`, `ruleta.wheelDurationMs` (keep in sync with the CSS
@@ -199,14 +201,17 @@ Uses the **service_role key** and its API routes (incl.
 2. `gh repo create <owner>/myconf-ruleta --private`, then
    `git remote set-url origin <new-repo-url>` and push.
 3. Customize — §1 config (incl. `poster.*`), §2 theme, §3 assets.
-4. Supabase: new project → run `supabase/schema.sql` in the SQL Editor.
+4. Supabase: new project → run `supabase/schema.sql` in the SQL Editor. On an
+   existing project, run it **before** deploying this version: without the
+   `document` column the form and the wheel's list fail.
 5. Vercel: `pnpm dlx vercel link` → **Root Directory** `apps/form`, function
    region `gru1` (or the one closest to the Supabase project), env
    `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_ANON_KEY` → deploy.
 6. `pnpm poster <deployed-url>` → set `assets.poster: "/poster.png"` → commit.
 7. Event day: run the ruleta locally with `apps/ruleta/.env.local` holding
    `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`.
-8. After the event: export winners (CSV), then **pause** the Supabase project
+8. After the event: export winners (CSV), **delete the participants** (the table
+   holds full ID numbers — personal data), then **pause** the Supabase project
    and the Vercel project.
 
 ## Guardrails

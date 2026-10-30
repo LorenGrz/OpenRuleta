@@ -31,7 +31,7 @@ export async function POST(request: Request) {
           id: "",
           name: "",
           email: "",
-          docLast3: "",
+          document: "",
           createdAt: "",
         },
       },

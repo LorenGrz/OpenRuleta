@@ -92,7 +92,8 @@ const participants = Array.from({ length: count }, (_, i) => {
     name,
     // The index keeps every email unique (the real table enforces it).
     email: `${slugify(name)}.${i}@example.com`,
-    doc_last3: String(100 + ((i * 137) % 900)),
+    doc_last3: null,
+    document: String(20_000_000 + ((i * 1_370_137) % 30_000_000)),
     created_at: new Date(now - (count - i) * 60_000).toISOString(),
     won_at: null,
     prize: null,

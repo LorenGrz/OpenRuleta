@@ -114,9 +114,9 @@ export function WinnerModal({
         </h3>
         <div className="my-6 rounded-xl border border-white/10 bg-[#151515] p-6">
           <p className="text-3xl font-bold text-white">{winner.name}</p>
-          {doc.enabled && winner.docLast3 && (
+          {doc.enabled && winner.document && (
             <p className="mt-1 font-mono text-sm text-white/50">
-              {doc.displayLabel} {maskDoc(winner.docLast3, doc.maskGlyph)}
+              {doc.displayLabel} {maskDoc(winner.document, doc.maskGlyph)}
             </p>
           )}
         </div>

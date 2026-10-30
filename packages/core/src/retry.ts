@@ -23,7 +23,7 @@ const RETRYABLE_PG_CODES = new Set([
 /** SQLSTATE codes that are NEVER retried (deterministic). */
 const TERMINAL_PG_CODES = new Set([
   "23505", // unique_violation (email already registered)
-  "23514", // check_violation (doc_last3)
+  "23514", // check_violation (document)
   "23502", // not_null_violation
   "22P02", // invalid_text_representation (bad uuid, etc.)
 ]);

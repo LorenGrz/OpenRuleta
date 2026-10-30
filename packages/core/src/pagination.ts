@@ -28,3 +28,24 @@ export function uniqueById<T extends { id: string }>(rows: readonly T[]): T[] {
   const seen = new Set<string>();
   return rows.filter((r) => !seen.has(r.id) && !!seen.add(r.id));
 }
+
+/** The part of a Supabase query result `rowsFromPage` reads. */
+export type PageResult<T> = {
+  data: T[] | null;
+  error: { code?: string } | null;
+  status?: number;
+};
+
+/**
+ * Rows of one page. A range starting past the end of the table can answer
+ * `PGRST103` / HTTP 416 instead of an empty list; that means "no more rows",
+ * not a failure. Any other error is thrown.
+ */
+export function rowsFromPage<T>(result: PageResult<T>): T[] {
+  const { data, error, status } = result;
+  if (error) {
+    if (error.code === "PGRST103" || status === 416) return [];
+    throw error;
+  }
+  return data ?? [];
+}

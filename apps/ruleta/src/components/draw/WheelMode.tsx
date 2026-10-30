@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ComponentProps } from "react";
 
 import { siteConfig } from "@openruleta/config";
 
@@ -19,6 +19,12 @@ const SETTLE_GRACE_MS = 400;
 
 type Spin = { runId: number; from: number; to: number; durationMs: number };
 
+type WheelModeProps = DrawModeProps &
+  Pick<
+    ComponentProps<typeof Wheel>,
+    "fills" | "fullLabels" | "maxWidthClassName"
+  >;
+
 export function WheelMode({
   pool,
   winnerIndex,
@@ -26,7 +32,10 @@ export function WheelMode({
   onSettled,
   sound,
   reducedMotion,
-}: DrawModeProps) {
+  fills,
+  fullLabels,
+  maxWidthClassName,
+}: WheelModeProps) {
   const [rotation, setRotation] = useState(0);
   const [spin, setSpin] = useState<Spin | null>(null);
   const settleOnce = useSettleOnce();
@@ -66,11 +75,14 @@ export function WheelMode({
 
   return (
     <Wheel
-      entries={pool.map((p) => ({ id: p.id, name: p.name }))}
+      entries={pool}
       rotation={rotation}
       durationMs={spin?.durationMs ?? wheelDurationMs}
       spinning={spin !== null}
       onSettled={() => spin && settle(spin.runId)}
+      fills={fills}
+      fullLabels={fullLabels}
+      maxWidthClassName={maxWidthClassName}
     />
   );
 }

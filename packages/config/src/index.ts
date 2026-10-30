@@ -117,6 +117,53 @@ export type DrawModesConfig = {
   };
 };
 
+/** One prize of the stand wheel. `weight` 0 keeps it visible but never wins. */
+export type PrizeConfig = { id: string; name: string; weight: number };
+
+/**
+ * Stand prize-wheel mode: an alternative to the raffle that spins over a list
+ * of prizes (no participants, no database). Limits (16 prizes, 40-character
+ * names, weights 0-100) live in apps/ruleta/src/lib/prizes.ts.
+ */
+export type PrizeWheelConfig = {
+  /** Heading above the wheel (not the raffle's editable title). */
+  title: string;
+  /** First-run prize list, also what "Restore defaults" brings back. Unique ids, at least 2, one weight above 0. */
+  defaultPrizes: PrizeConfig[];
+  /** Segment fills: [even, odd, last]. The third is used only on the last segment of an odd count. */
+  segmentFills: [string, string, string];
+  messages: {
+    appModeLabel: string;
+    raffleMode: string;
+    prizeWheelMode: string;
+    spin: string;
+    spinning: string;
+    editPrizes: string;
+    resultHeading: string;
+    resultClose: string;
+    editorHeading: string;
+    editorHint: string;
+    nameLabel: string;
+    weightLabel: string;
+    namePlaceholder: string;
+    addPrize: string;
+    removePrize: string;
+    save: string;
+    cancel: string;
+    restoreDefaults: string;
+    confirmRestore: string;
+    /** Placeholder: {max}. */
+    errorNameTooLong: string;
+    errorNameRequired: string;
+    /** Placeholder: {max}. */
+    errorWeightInvalid: string;
+    errorMinPrizes: string;
+    /** Placeholder: {max}. */
+    errorMaxPrizes: string;
+    errorNoWeight: string;
+  };
+};
+
 export type SiteConfig = {
   /** Product / event name. */
   name: string;
@@ -202,6 +249,8 @@ export type SiteConfig = {
     wheelRimColor: string;
     /** Draw modes (wheel, slot, grid, plinko) — see {@link DrawModesConfig}. */
     drawModes: DrawModesConfig;
+    /** Stand prize wheel (the "Wheel" app mode) — see {@link PrizeWheelConfig}. */
+    prizeWheel: PrizeWheelConfig;
     csv: {
       filenamePrefix: string;
       headers: [string, string, string, string, string];
@@ -471,6 +520,47 @@ export const siteConfig = defineSiteConfig({
         pegColor: "#9fb8e6",
         ballColors: ["#0a63c4", "#3b82f6", "#00306b", "#60a5fa", "#1e40af"],
         ballInk: "#ffffff",
+      },
+    },
+    prizeWheel: {
+      title: "Spin for a prize",
+      defaultPrizes: [
+        { id: "prize-sticker", name: "Sticker pack", weight: 30 },
+        { id: "prize-coffee", name: "Free coffee", weight: 25 },
+        { id: "prize-retry", name: "Try again", weight: 20 },
+        { id: "prize-tote", name: "Tote bag", weight: 15 },
+        { id: "prize-shirt", name: "T-shirt", weight: 8 },
+        { id: "prize-grand", name: "Grand prize", weight: 2 },
+      ],
+      segmentFills: ["#0a63c4", "#00306b", "#117a8b"],
+      messages: {
+        appModeLabel: "Mode",
+        raffleMode: "Raffle",
+        prizeWheelMode: "Prize wheel",
+        spin: "Spin",
+        spinning: "Spinning…",
+        editPrizes: "Edit prizes",
+        resultHeading: "You got",
+        resultClose: "Done",
+        editorHeading: "Prizes",
+        editorHint:
+          "Weight 0-100: a higher weight comes up more often, 0 keeps the prize on the wheel but it never wins.",
+        nameLabel: "Prize",
+        weightLabel: "Weight",
+        namePlaceholder: "Prize name",
+        addPrize: "Add prize",
+        removePrize: "Remove prize",
+        save: "Save",
+        cancel: "Cancel",
+        restoreDefaults: "Restore defaults",
+        confirmRestore:
+          "Restore the default prizes? Your changes will be lost.",
+        errorNameTooLong: "Name must be {max} characters or fewer.",
+        errorNameRequired: "Name is required.",
+        errorWeightInvalid: "Weight must be a whole number from 0 to {max}.",
+        errorMinPrizes: "Add at least 2 prizes.",
+        errorMaxPrizes: "No more than {max} prizes.",
+        errorNoWeight: "At least one prize needs a weight above 0.",
       },
     },
     csv: {

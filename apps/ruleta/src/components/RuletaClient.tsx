@@ -6,6 +6,7 @@ import { siteConfig } from "@openruleta/config";
 import type { ParticipantInput } from "@openruleta/core";
 import { Wordmark } from "@openruleta/ui";
 
+import { AppModeToggle } from "@/components/AppModeToggle";
 import { CollaboratorCarousel } from "@/components/CollaboratorCarousel";
 import { DrawModeSelector } from "@/components/draw/DrawModeSelector";
 import { getDrawMode } from "@/components/draw/registry";
@@ -21,6 +22,7 @@ import { QrOverlay } from "@/components/QrOverlay";
 import { SponsorCarousel } from "@/components/SponsorCarousel";
 import { WinnerModal } from "@/components/WinnerModal";
 import { WinnersModal } from "@/components/WinnersModal";
+import { useSoundPreference } from "@/components/useSoundPreference";
 import { downloadCsv, toCsv } from "@/lib/csv";
 import { useWinnerNotification } from "@/lib/useWinnerNotification";
 import { useSoundEngine } from "@/lib/sound/useSoundEngine";
@@ -38,7 +40,6 @@ import {
 
 const POLL_MS = 5000;
 const m = siteConfig.ruleta.messages;
-const SOUND_KEY = `${siteConfig.slug}-ruleta-sound`;
 const fill = (s: string, vars: Record<string, string>) =>
   Object.entries(vars).reduce((acc, [k, v]) => acc.replaceAll(`{${k}}`, v), s);
 
@@ -99,25 +100,7 @@ export function RuletaClient() {
   const [showQr, setShowQr] = useState(false);
   const [showWinners, setShowWinners] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [soundOn, setSoundOn] = useState(() => {
-    try {
-      return window.localStorage.getItem(SOUND_KEY) !== "off";
-    } catch {
-      return true;
-    }
-  });
-
-  function toggleSound() {
-    setSoundOn((on) => {
-      const next = !on;
-      try {
-        window.localStorage.setItem(SOUND_KEY, next ? "on" : "off");
-      } catch {
-        // ignored
-      }
-      return next;
-    });
-  }
+  const [soundOn, toggleSound] = useSoundPreference();
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -436,6 +419,9 @@ export function RuletaClient() {
           className="h-11"
         />
         <div className="flex items-center gap-3">
+          <AppModeToggle
+            disabled={spinning || modalWinner !== null || busy || overlayOpen}
+          />
           <DrawModeSelector
             value={drawMode}
             onChange={setDrawMode}

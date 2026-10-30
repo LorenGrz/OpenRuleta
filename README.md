@@ -213,8 +213,8 @@ One table, `public.participants`. The form inserts `name` / `email` /
 column is legacy and no longer written); a unique index on `lower(email)` rejects duplicates with a `409`.
 The wheel sets `won_at` and `prize` on winners so they stay excluded across
 spins, and `notified_at` when the winner email is sent (real over SMTP if `SMTP_USER`/`SMTP_PASS` are set, else simulated); "reset draw"
-clears all three. Existing databases: re-run `supabase/schema.sql` to add
-`notified_at` (additive, idempotent) before deploying this version. The wheel resolves a spin against a frozen copy
+clears all three. Existing databases: re-run `supabase/schema.sql` (idempotent) before deploying this version:
+it adds `notified_at` and `document`, and see the migration note in "Deploying the form". The wheel resolves a spin against a frozen copy
 of the list, and pauses polling while it spins or a modal is open, so a
 background refresh can't shift the result mid-animation. The prize wheel mode
 stores nothing in the database (its prizes live in the browser's `localStorage`).

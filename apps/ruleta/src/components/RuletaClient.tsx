@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 
 import { siteConfig } from "@openruleta/config";
 import type { ParticipantInput } from "@openruleta/core";
@@ -62,9 +70,9 @@ function downloadWinnersCsv(winners: Participant[]): void {
 }
 
 // All participants, winners included — the full document is exported raw (not
-// masked): the operator already holds the service_role key, so masking it in
-// the CSV would add no privacy. On-screen it stays masked (the screen is
-// projected), so the CSV is the only place the whole value is visible.
+// masked). The full value does reach the operator's browser through the local
+// API (/api/participants), but it is only rendered in the CSVs: on-screen it
+// stays masked because the screen is projected.
 function downloadParticipantsCsv(participants: Participant[]): void {
   const csv = toCsv(
     siteConfig.ruleta.csv.participantsHeaders,
@@ -83,12 +91,14 @@ function downloadParticipantsCsv(participants: Participant[]): void {
   );
 }
 
-export function RuletaClient() {
-  const [participants, setParticipants] = useState<Participant[]>([]);
-  // Session-only skips ("skip and spin again"): NOT persisted, that person did
-  // not win. Confirmed winners are excluded via won_at (Supabase).
-  const [skipIds, setSkipIds] = useState<Set<string>>(new Set());
+type Props = {
+  /** Session-only skips, owned by RuletaApp so they survive a mode switch. */
+  skipIds: Set<string>;
+  setSkipIds: Dispatch<SetStateAction<Set<string>>>;
+};
 
+export function RuletaClient({ skipIds, setSkipIds }: Props) {
+  const [participants, setParticipants] = useState<Participant[]>([]);
   // Seeds the winner modal's prize field so the operator doesn't retype what
   // is being raffled.
   const raffleTitle = useRaffleTitle();
@@ -420,7 +430,14 @@ export function RuletaClient() {
         />
         <div className="flex items-center gap-3">
           <AppModeToggle
-            disabled={spinning || modalWinner !== null || busy || overlayOpen}
+            disabled={
+              spinning ||
+              modalWinner !== null ||
+              busy ||
+              overlayOpen ||
+              deletingId !== null ||
+              deletingAll
+            }
           />
           <DrawModeSelector
             value={drawMode}

@@ -14,6 +14,7 @@ export type Participant = {
   id: string;
   name: string;
   email: string;
+  /** Full document from the DB; only the last 3 characters from `addParticipant`. */
   document: string;
   createdAt: string;
 };

@@ -74,7 +74,7 @@ export async function addParticipant(
       id: "",
       name: input.name,
       email: input.email,
-      document: input.document,
+      document: input.document.slice(-3),
       createdAt: new Date().toISOString(),
     };
   }
@@ -102,12 +102,13 @@ export async function addParticipant(
   }
 
   // The anon key cannot read the row back (RLS). The form only needs the name
-  // and the masked document for the ticket, so return that.
+  // and the last 3 characters of the document for the ticket, so return that
+  // (never the full value).
   return {
     id: "",
     name: input.name,
     email: input.email,
-    document: input.document,
+    document: input.document.slice(-3),
     createdAt: new Date().toISOString(),
   };
 }

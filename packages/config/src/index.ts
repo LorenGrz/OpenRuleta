@@ -30,8 +30,6 @@ export type DocFieldConfig = {
   label: string;
   hint: string;
   placeholder: string;
-  /** Max characters accepted by the input. */
-  maxLength: number;
   /** Regex source (no slashes) the value must match when the field is enabled. */
   pattern: string;
   /** Prefix shown before the masked value, e.g. "ID ••• 123". */
@@ -362,7 +360,6 @@ export const siteConfig = defineSiteConfig({
       label: "ID number",
       hint: "Your full ID or passport number. Dots, spaces and dashes are ignored.",
       placeholder: "e.g. 30.123.456",
-      maxLength: 20,
       pattern: "^[0-9A-Z]{6,20}$",
       displayLabel: "ID",
       maskGlyph: "•••",

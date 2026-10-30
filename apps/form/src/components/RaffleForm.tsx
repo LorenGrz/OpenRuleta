@@ -172,15 +172,12 @@ export function RaffleForm() {
               type="text"
               inputMode="text"
               autoCapitalize="characters"
-              maxLength={doc.maxLength}
               placeholder={doc.placeholder}
               value={fields.document}
               onChange={(e) =>
                 update(
                   "document",
-                  e.target.value
-                    .replace(/[^0-9A-Za-z.\s-]/g, "")
-                    .slice(0, doc.maxLength),
+                  e.target.value.replace(/[^0-9A-Za-z.\s-]/g, ""),
                 )
               }
               className={inputClass(errors.document)}

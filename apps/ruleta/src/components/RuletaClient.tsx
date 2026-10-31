@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { siteConfig } from "@openruleta/config";
+import type { ParticipantInput } from "@openruleta/core";
 import { Wordmark } from "@openruleta/ui";
 
 import { CollaboratorCarousel } from "@/components/CollaboratorCarousel";
@@ -13,6 +14,7 @@ import { useDrawMode } from "@/components/draw/useDrawMode";
 import { useReducedMotion } from "@/components/draw/useReducedMotion";
 import { EditableTitle, useRaffleTitle } from "@/components/EditableTitle";
 import { HeaderMenu } from "@/components/HeaderMenu";
+import { ImportCsvModal } from "@/components/ImportCsvModal";
 import { EmailPreviewModal } from "@/components/EmailPreviewModal";
 import { ParticipantsPanel } from "@/components/ParticipantsPanel";
 import { QrOverlay } from "@/components/QrOverlay";
@@ -27,6 +29,7 @@ import {
   deleteAllParticipants as deleteAllApi,
   deleteParticipant as deleteParticipantApi,
   fetchParticipants,
+  importParticipants as importParticipantsApi,
   resetWinners as resetWinnersApi,
   setWinnerPrize as setWinnerPrizeApi,
   undoWinner as undoWinnerApi,
@@ -95,6 +98,7 @@ export function RuletaClient() {
   const [deletingAll, setDeletingAll] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const [showWinners, setShowWinners] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [soundOn, setSoundOn] = useState(() => {
     try {
       return window.localStorage.getItem(SOUND_KEY) !== "off";
@@ -252,7 +256,7 @@ export function RuletaClient() {
     spinRef.current = spin;
   });
   const overlayOpen =
-    showQr || showWinners || notification.state.status !== "idle";
+    showQr || showWinners || showImport || notification.state.status !== "idle";
   useEffect(() => {
     if (overlayOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -382,6 +386,28 @@ export function RuletaClient() {
     }
   }
 
+  function openImport() {
+    if (spinning || modalWinner || busy) return;
+    setShowImport(true);
+  }
+
+  // Resolves with the server summary; rejects when the import fails so the
+  // modal can show the error and keep its preview. `busy` pauses the polling.
+  async function runImport(rows: ParticipantInput[]) {
+    setBusy(true);
+    try {
+      const result = await importParticipantsApi(rows);
+      try {
+        await reload();
+      } catch {
+        setLoadError(m.loadFailed);
+      }
+      return result;
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function resetRound() {
     if (busy) return;
     const msg =
@@ -431,6 +457,8 @@ export function RuletaClient() {
             onExportParticipantsCsv={() =>
               downloadParticipantsCsv(participants)
             }
+            onImportCsv={openImport}
+            importDisabled={spinning || modalWinner !== null || busy}
             onDeleteAll={deleteAllParticipants}
             deletingAll={deletingAll}
             soundOn={soundOn}
@@ -554,6 +582,13 @@ export function RuletaClient() {
             notification.state.status !== "idle" &&
             notification.notify(notification.state.participant)
           }
+        />
+      )}
+
+      {showImport && (
+        <ImportCsvModal
+          onClose={() => setShowImport(false)}
+          onImport={runImport}
         />
       )}
 

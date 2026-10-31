@@ -140,6 +140,15 @@ The anon key can only `INSERT` into `participants` (enforced by RLS in
 During the event, run `apps/ruleta` locally against the **same** Supabase
 project — it picks up new sign-ups automatically (it polls every few seconds).
 
+Besides the public form, the operator can load participants from a CSV
+("Import CSV" in the wheel menu): download the template, fill `name`, `email`
+and `document` (comma, semicolon or tab separated; UTF-8 or Excel's
+windows-1252), review the preview and import. Rows with an email that already
+exists are skipped, and winners are never touched. A participants export can be
+re-imported. Files with more than 10,000 valid rows are rejected (split them). If the
+connection drops mid-import, retry: rows already imported are skipped and shown as
+"already existed".
+
 The form stores the participant's full ID number. After the event, export the
 CSVs and **delete the participants** ("Delete all participants" in the wheel menu or
 `delete from public.participants`), then pause the projects.

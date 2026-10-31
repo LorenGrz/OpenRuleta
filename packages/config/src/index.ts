@@ -209,6 +209,21 @@ export type SiteConfig = {
       participantsFilenamePrefix: string;
       /** Columns for the "export all participants" CSV (incl. winners). */
       participantsHeaders: [string, string, string, string, string, string];
+      /** Columns of the downloadable import template: [name, email, document]. */
+      importHeaders: [string, string, string];
+      /** Filename of the downloadable import template. */
+      importTemplateFilename: string;
+      /** Obviously fictitious example rows of the import template. */
+      importTemplateRows: [string, string, string][];
+      /**
+       * Accepted header names per field when importing (case-insensitive,
+       * accents ignored). Include the canonical name itself.
+       */
+      importAliases: {
+        name: string[];
+        email: string[];
+        document: string[];
+      };
     };
     /** Winner email — see {@link WinnerEmailConfig}. */
     email: WinnerEmailConfig;
@@ -226,6 +241,7 @@ export type SiteConfig = {
       menuOpen: string;
       menuClose: string;
       exportParticipantsCsv: string;
+      importCsv: string;
       titleAriaLabel: string;
       editTitle: string;
       spin: string;
@@ -309,6 +325,31 @@ export type SiteConfig = {
       notifyNoPrize: string;
       notifyInvalidId: string;
       notifyRouteFailed: string;
+      /** CSV import modal. {n} / {line} / {reason} / {columns} are substituted. */
+      importHeading: string;
+      importFileLabel: string;
+      importFileHint: string;
+      importDownloadTemplate: string;
+      importReading: string;
+      importReadFailed: string;
+      importFileTooLarge: string;
+      importTooManyRows: string;
+      importMissingColumns: string;
+      importValidCount: string;
+      importDuplicatesCount: string;
+      importInvalidCount: string;
+      importNothingToImport: string;
+      importErrorLine: string;
+      importMoreErrors: string;
+      importButton: string;
+      importing: string;
+      importDone: string;
+      importFailed: string;
+      /** Import route-handler error bodies. */
+      importInvalidBody: string;
+      importRouteTooMany: string;
+      importRouteFailed: string;
+      importUnsupportedType: string;
     };
   };
 
@@ -444,6 +485,17 @@ export const siteConfig = defineSiteConfig({
         "won_at",
         "prize",
       ],
+      importHeaders: ["name", "email", "document"],
+      importTemplateFilename: "participants-import-template.csv",
+      importTemplateRows: [
+        ["Alex Example", "alex.example@example.com", "30123456"],
+        ["Sam Sample", "sam.sample@example.com", "AB1234567"],
+      ],
+      importAliases: {
+        name: ["name", "full name", "nombre", "nombre completo"],
+        email: ["email", "e-mail", "mail", "correo", "correo electronico"],
+        document: ["document", "documento", "dni", "id", "id number", "cedula"],
+      },
     },
     email: {
       from: "OpenRuleta <no-reply@example.com>",
@@ -463,6 +515,7 @@ export const siteConfig = defineSiteConfig({
       menuOpen: "Open menu",
       menuClose: "Close menu",
       exportParticipantsCsv: "Export participants CSV",
+      importCsv: "Import CSV",
       titleAriaLabel: "Draw title",
       editTitle: "Edit title",
       spin: "Spin",
@@ -543,6 +596,32 @@ export const siteConfig = defineSiteConfig({
       notifyNoPrize: "Assign a prize before notifying the winner.",
       notifyInvalidId: "Invalid id.",
       notifyRouteFailed: "Could not send the email.",
+      importHeading: "Import participants from CSV",
+      importFileLabel: "CSV file (max. 5 MB)",
+      importFileHint:
+        "Columns: name, email and document. Rows whose email already exists are skipped; winners are never changed.",
+      importDownloadTemplate: "Download template",
+      importReading: "Reading file…",
+      importReadFailed: "Could not read the file.",
+      importFileTooLarge: "The file is larger than 5 MB.",
+      importTooManyRows: "Too many rows: at most {n} can be imported at once.",
+      importMissingColumns: "Missing columns: {columns}.",
+      importValidCount: "{n} valid",
+      importDuplicatesCount: "{n} repeated in the file",
+      importInvalidCount: "{n} with errors",
+      importNothingToImport: "There are no valid rows to import.",
+      importErrorLine: "Line {line}: {reason}",
+      importMoreErrors: "…and {n} more",
+      importButton: "Import {n}",
+      importing: "Importing…",
+      importDone:
+        "Done: {inserted} imported, {duplicates} already existed, {invalid} rejected.",
+      importFailed:
+        "The import failed, but some rows may already have been imported. Try again: rows already imported are skipped, so retrying is safe.",
+      importInvalidBody: "Invalid request.",
+      importRouteTooMany: "Too many rows (max. {n}).",
+      importRouteFailed: "Could not import the participants.",
+      importUnsupportedType: "Unsupported content type.",
     },
   },
 

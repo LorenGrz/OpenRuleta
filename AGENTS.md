@@ -61,7 +61,14 @@ type-checked. What lives here:
   (the winning moment in every mode) and `plinko.*` (`prizeLabel`, `outLabel`,
   `tickerHeading`, `boardAriaLabel`, `pegColor`, `ballColors`, `ballInk`).
   `wheelDurationMs` also paces the slot and grid modes.
-- `ruleta.csv.{filenamePrefix,headers}`.
+- `ruleta.csv.{filenamePrefix,headers}` (winners export) and the participants
+  export. CSV **import** (wheel menu → "Import CSV"): `importHeaders`,
+  `importTemplateFilename`, `importTemplateRows` (fictitious example rows of the
+  downloadable template) and `importAliases` (accepted header names per
+  `name`/`email`/`document`, case/accent-insensitive; add the language of your
+  event). Rows are validated with the `form.*` rules (`nameMinLength`,
+  `docField`, error messages); an old export with 3-digit documents is rejected
+  by `docField.pattern`, reported per line.
 - `ruleta.email.{from,subject,body}` — the winner email. `{name}` / `{prize}`
   placeholders; blank lines in `body` = paragraphs. Simulated (nothing sent)
   unless the ruleta has `SMTP_USER` + `SMTP_PASS` (see the env table); then it
@@ -119,6 +126,21 @@ Replace the placeholder SVGs. The `assets.*` and `sponsors[].src` /
    above. Remove unused `placeholder-*.svg`.
 5. `pnpm typecheck && pnpm lint && pnpm test && pnpm build` — all must pass.
 6. `pnpm dev` (mock DB, no `.env` needed) and eyeball both apps.
+
+### CSV import API
+
+`POST /api/participants` on the ruleta with `{ rows: [{ name, email, document }] }`
+(max 10,000 rows, else 400). Every row is revalidated server-side; only those
+three fields reach the DB. Existing emails are skipped (never overwritten, so a
+winner is never reset). Responds `{ inserted, duplicates, invalid }`. The
+`import*` strings live in `ruleta.messages`. `listParticipants` pages through
+Supabase's row cap, so large imports are fully drawn. POST requires
+`Content-Type: application/json` (415 otherwise). Names over 200 characters,
+emails over 254 and control characters are rejected as invalid rows.
+
+Limits and caveats: a file with more than 10,000 valid rows is rejected by the
+modal (split it); a network cut mid-import can leave some rows imported, and on
+retry those rows count as `duplicates` (retrying is safe, nothing is overwritten).
 
 ## QR poster
 

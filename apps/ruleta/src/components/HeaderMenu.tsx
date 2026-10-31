@@ -17,6 +17,9 @@ type Props = {
   onRefresh: () => void;
   refreshing: boolean;
   onExportParticipantsCsv: () => void;
+  onImportCsv: () => void;
+  /** Importing is blocked during a spin, with a winner modal open, or while busy. */
+  importDisabled: boolean;
   onDeleteAll: () => void;
   deletingAll: boolean;
   soundOn: boolean;
@@ -34,6 +37,8 @@ export function HeaderMenu({
   onRefresh,
   refreshing,
   onExportParticipantsCsv,
+  onImportCsv,
+  importDisabled,
   onDeleteAll,
   deletingAll,
   soundOn,
@@ -176,6 +181,20 @@ export function HeaderMenu({
             type="button"
             role="menuitem"
             tabIndex={-1}
+            disabled={importDisabled}
+            onClick={() => runAndClose(onImportCsv)}
+            className={itemClass}
+          >
+            {m.importCsv}
+          </button>
+
+          <button
+            ref={(el) => {
+              itemRefs.current[3] = el;
+            }}
+            type="button"
+            role="menuitem"
+            tabIndex={-1}
             disabled={deletingAll}
             onClick={() => runAndClose(onDeleteAll)}
             className={`${itemClass} text-error hover:bg-error/15`}
@@ -185,7 +204,7 @@ export function HeaderMenu({
 
           <button
             ref={(el) => {
-              itemRefs.current[3] = el;
+              itemRefs.current[4] = el;
             }}
             type="button"
             role="menuitem"

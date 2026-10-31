@@ -103,13 +103,13 @@ export function PrizeWheelClient() {
 
   return (
     <div className="flex h-dvh flex-col bg-[#050505] text-white">
-      <header className="flex h-16 flex-none items-center justify-between border-b border-white/10 px-6">
+      <header className="flex min-h-16 flex-none flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-white/10 px-4 py-2 lg:px-6">
         <Wordmark
           src={siteConfig.assets.logo}
           alt={siteConfig.name}
           className="h-11"
         />
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-2 lg:gap-3">
           <AppModeToggle disabled={spinning || modalOpen} />
           <HeaderMenu
             raffle={false}
@@ -124,7 +124,7 @@ export function PrizeWheelClient() {
           <SponsorCarousel />
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 px-8 py-4">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-4 py-3 lg:gap-4 lg:px-8 lg:py-4">
           <h1 className="text-3xl font-bold text-white">{pw.title}</h1>
 
           <div className="flex min-h-0 w-full flex-1 items-center justify-center [container-type:size]">
@@ -147,18 +147,18 @@ export function PrizeWheelClient() {
                 {m.noWinnablePrize}
               </p>
             )}
-            <div className="flex items-center gap-6">
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
               <button
                 onClick={spin}
                 disabled={!canSpin}
-                className="rounded-pill bg-primary px-14 py-4 text-sm font-semibold uppercase tracking-wider text-white shadow-lg transition hover:scale-105 hover:bg-primary-hover active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
+                className="rounded-pill bg-primary px-10 py-4 sm:px-14 text-sm font-semibold uppercase tracking-wider text-white shadow-lg transition hover:scale-105 hover:bg-primary-hover active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
               >
                 {spinning ? m.spinning : m.spin}
               </button>
               <button
                 onClick={() => setShowEditor(true)}
                 disabled={spinning || modalOpen}
-                className="text-sm text-white/40 underline transition hover:text-white disabled:opacity-40"
+                className="whitespace-nowrap text-sm text-white/40 underline transition hover:text-white disabled:opacity-40"
               >
                 {m.editPrizes}
               </button>

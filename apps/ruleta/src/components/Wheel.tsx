@@ -30,7 +30,8 @@ type Props = {
   /** Show each entry's whole name (radial, up to two lines) instead of its
    *  first word or initials. */
   fullLabels?: boolean;
-  /** Tailwind max-width of the wheel; defaults to the raffle's 460px. */
+  /** Tailwind max-width of the wheel; defaults to the raffle's 460px, or
+   *  less when its size container is smaller. */
   maxWidthClassName?: string;
 };
 
@@ -72,7 +73,7 @@ export function Wheel({
   onSettled,
   fills = wheelSegmentFills,
   fullLabels = false,
-  maxWidthClassName = "max-w-[460px]",
+  maxWidthClassName = "max-w-[min(460px,100cqmin)]",
 }: Props) {
   const n = entries.length;
   const seg = n > 0 ? 360 / n : 360;

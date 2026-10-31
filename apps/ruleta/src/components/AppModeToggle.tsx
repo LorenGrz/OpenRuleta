@@ -26,7 +26,7 @@ export function AppModeToggle({ disabled }: Props) {
     <div
       role="group"
       aria-label={m.appModeLabel}
-      className="inline-flex items-center gap-0.5 rounded-lg bg-white/10 p-1"
+      className="inline-flex flex-none items-center gap-0.5 rounded-lg bg-white/10 p-1"
     >
       {APP_MODES.map((id) => (
         <button
@@ -35,7 +35,7 @@ export function AppModeToggle({ disabled }: Props) {
           aria-pressed={mode === id}
           disabled={disabled}
           onClick={() => setMode(id)}
-          className={`rounded-md px-3 py-1.5 text-sm font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-50 ${
+          className={`whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-50 ${
             mode === id
               ? "bg-primary text-white"
               : "text-white/70 hover:text-white"

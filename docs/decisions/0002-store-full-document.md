@@ -16,7 +16,7 @@ The form collected only the last 3 digits of the participant's ID. That is too w
 
 The form collects the full document, normalized (dots, spaces and dashes removed, uppercase), and stores it in a new `participants.document` column (max 32 characters). The legacy `doc_last3` column stays, is no longer written, and `toWinnerParticipant` falls back to it for old rows. The anon key keeps `INSERT`-only access, now on `document`.
 
-Exposure is limited: the projected screens (`WinnerModal`, `ParticipantsPanel`, the form ticket) show only the last 3 characters via `maskDoc`, `localStorage` keeps only the last 3 characters, and the full value appears solely in the two CSV exports, which the operator (who holds the service_role key) already could read. The schema must be applied before deploying, and participants must be deleted after the event.
+Exposure is limited, not zero: the full document travels through the local API (`/api/participants`) to the operator's browser, so the wheel must stay on `127.0.0.1` or behind `RULETA_BASIC_AUTH`. It is only rendered in the two CSV exports; the projected screens (`WinnerModal`, `ParticipantsPanel`, the form ticket) show only the last 3 characters via `maskDoc`, and `localStorage` keeps only the last 3 characters. The schema must be applied before deploying, and participants must be deleted after the event.
 
 ## Alternatives considered
 

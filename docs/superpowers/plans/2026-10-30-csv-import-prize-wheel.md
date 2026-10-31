@@ -75,7 +75,7 @@ Los `worker` corren de a uno y en secuencia, porque las etapas comparten config 
 
 **Core (`participants.ts`)**
 - `addParticipantsBatch(inputs)` devuelve `{ inserted, duplicates }` y usa service_role, no `addParticipant`.
-- Por tandas de 200: consulta emails existentes con `.in`, inserta los nuevos, y ante un 23505 por carrera con el form reintenta esa tanda fila por fila.
+- Por tandas de 100: consulta emails existentes con `.in`, inserta los nuevos, y ante un 23505 por carrera con el form reintenta esa tanda fila por fila.
 - `mockAddParticipants` escribe el archivo una sola vez. Exportar en `index.ts`.
 - **`listParticipants` debe paginar con `.range()`.** Supabase corta en 1000 filas por defecto, así que un CSV grande dejaría gente fuera del sorteo sin aviso. Agregar `.order("id")` como desempate, porque el lote comparte `created_at`.
 

@@ -26,6 +26,13 @@ pnpm dev          # form on http://localhost:3000 + ruleta on http://localhost:3
                   # (or one at a time: pnpm dev:form / pnpm dev:ruleta)
 ```
 
+`pnpm dev` (`scripts/dev.mjs`) checks Supabase once at startup with the
+credentials in `apps/ruleta/.env.local`; if it is unreachable or the schema is
+out of date it warns in the console and starts both apps with
+`OPENRULETA_MOCK_DB=1`. An already-set `OPENRULETA_MOCK_DB` is respected.
+`pnpm dev:form` / `pnpm dev:ruleta` do not run this check. The fallback is
+local-only: `isMockDb()` is unchanged and production never falls back.
+
 ## Customizing for an event
 
 Everything user-facing is in **three places**, in this order of frequency:
@@ -61,6 +68,15 @@ type-checked. What lives here:
   (the winning moment in every mode) and `plinko.*` (`prizeLabel`, `outLabel`,
   `tickerHeading`, `boardAriaLabel`, `pegColor`, `ballColors`, `ballInk`).
   `wheelDurationMs` also paces the slot and grid modes.
+- `ruleta.prizeWheel.*` — the stand "Prize wheel" app mode (an alternative to the
+  raffle; no participants, no database): `title` (heading above the wheel),
+  `defaultPrizes[]` (`{ id, name, weight }`: unique ids, 2-16 prizes, at least one
+  weight above 0; weight 0 = shown but never wins), `segmentFills` `[even, odd,
+  last]` (the third colour only paints the last segment when the count is odd)
+  and `messages.*` (toggle, editor, validation and result texts). The operator
+  edits the live list from "Edit prizes" (name up to 40 characters, integer
+  weight 0-100); it is stored in `localStorage`, not in config. Keep the default
+  prizes generic, no real brands.
 - `ruleta.csv.{filenamePrefix,headers}` (winners export) and the participants
   export. CSV **import** (wheel menu → "Import CSV"): `importHeaders`,
   `importTemplateFilename`, `importTemplateRows` (fictitious example rows of the
@@ -125,7 +141,8 @@ Replace the placeholder SVGs. The `assets.*` and `sponsors[].src` /
 4. Drop real SVGs into `apps/form/public/` and `apps/ruleta/public/` per the table
    above. Remove unused `placeholder-*.svg`.
 5. `pnpm typecheck && pnpm lint && pnpm test && pnpm build` — all must pass.
-6. `pnpm dev` (mock DB, no `.env` needed) and eyeball both apps.
+6. `pnpm dev` (mock DB when no `.env.local` exists or Supabase does not respond)
+   and eyeball both apps.
 
 ### CSV import API
 
@@ -213,7 +230,8 @@ Uses the **service_role key** and its API routes (incl.
   `pnpm --filter @openruleta/ruleta`). Leave `RULETA_BASIC_AUTH` unset. Run it on
   the operator's laptop against the same Supabase project — it polls for new
   sign-ups every few seconds.
-- **Hosted.** Set `RULETA_BASIC_AUTH="user:password"` (plus the two Supabase
+- **Hosted.** The scripts bind `127.0.0.1`; hosting needs `next start -H 0.0.0.0`
+  **together with** `RULETA_BASIC_AUTH="user:password"` (plus the two Supabase
   vars). `apps/ruleta/src/proxy.ts` then challenges every request — pages and API.
   **Never host it without that.** Add host rate-limiting / IP allow-list on top.
 

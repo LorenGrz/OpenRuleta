@@ -13,7 +13,9 @@ import { siteConfig } from "@openruleta/config";
 
 const m = siteConfig.ruleta.messages;
 
-type Props = {
+type RaffleItems = {
+  /** Raffle-only menu items (default). */
+  raffle?: true;
   onRefresh: () => void;
   refreshing: boolean;
   onExportParticipantsCsv: () => void;
@@ -22,6 +24,12 @@ type Props = {
   importDisabled: boolean;
   onDeleteAll: () => void;
   deletingAll: boolean;
+};
+
+/** The prize wheel menu has no participant items, only the shared ones. */
+type NoRaffleItems = { raffle: false };
+
+type Props = (RaffleItems | NoRaffleItems) & {
   soundOn: boolean;
   onToggleSound: () => void;
   /** Slot for another feature (e.g. a draw-mode selector) to render as extra
@@ -33,18 +41,9 @@ type Props = {
  *  `aria-expanded`, `role="menu"`/`menuitem`) with arrow-key navigation,
  *  closing on Escape or an outside click, and focus returning to the
  *  trigger button on close. */
-export function HeaderMenu({
-  onRefresh,
-  refreshing,
-  onExportParticipantsCsv,
-  onImportCsv,
-  importDisabled,
-  onDeleteAll,
-  deletingAll,
-  soundOn,
-  onToggleSound,
-  extra,
-}: Props) {
+export function HeaderMenu(props: Props) {
+  const { soundOn, onToggleSound, extra } = props;
+  const raffle = props.raffle === false ? null : props;
   const [open, setOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -147,60 +146,64 @@ export function HeaderMenu({
           aria-label={m.menu}
           className="absolute right-0 top-full z-[150] mt-2 w-56 overflow-hidden rounded-lg border border-white/10 bg-[#151515] py-1 shadow-xl"
         >
-          <button
-            ref={(el) => {
-              itemRefs.current[0] = el;
-            }}
-            type="button"
-            role="menuitem"
-            tabIndex={-1}
-            disabled={refreshing}
-            onClick={() => runAndClose(onRefresh)}
-            className={itemClass}
-          >
-            {refreshing ? m.refreshing : m.refresh}
-          </button>
+          {raffle && (
+            <>
+              <button
+                ref={(el) => {
+                  itemRefs.current[0] = el;
+                }}
+                type="button"
+                role="menuitem"
+                tabIndex={-1}
+                disabled={raffle.refreshing}
+                onClick={() => runAndClose(raffle.onRefresh)}
+                className={itemClass}
+              >
+                {raffle.refreshing ? m.refreshing : m.refresh}
+              </button>
 
-          <button
-            ref={(el) => {
-              itemRefs.current[1] = el;
-            }}
-            type="button"
-            role="menuitem"
-            tabIndex={-1}
-            onClick={() => runAndClose(onExportParticipantsCsv)}
-            className={itemClass}
-          >
-            {m.exportParticipantsCsv}
-          </button>
+              <button
+                ref={(el) => {
+                  itemRefs.current[1] = el;
+                }}
+                type="button"
+                role="menuitem"
+                tabIndex={-1}
+                onClick={() => runAndClose(raffle.onExportParticipantsCsv)}
+                className={itemClass}
+              >
+                {m.exportParticipantsCsv}
+              </button>
 
-          <button
-            ref={(el) => {
-              itemRefs.current[2] = el;
-            }}
-            type="button"
-            role="menuitem"
-            tabIndex={-1}
-            disabled={importDisabled}
-            onClick={() => runAndClose(onImportCsv)}
-            className={itemClass}
-          >
-            {m.importCsv}
-          </button>
+              <button
+                ref={(el) => {
+                  itemRefs.current[2] = el;
+                }}
+                type="button"
+                role="menuitem"
+                tabIndex={-1}
+                disabled={raffle.importDisabled}
+                onClick={() => runAndClose(raffle.onImportCsv)}
+                className={itemClass}
+              >
+                {m.importCsv}
+              </button>
 
-          <button
-            ref={(el) => {
-              itemRefs.current[3] = el;
-            }}
-            type="button"
-            role="menuitem"
-            tabIndex={-1}
-            disabled={deletingAll}
-            onClick={() => runAndClose(onDeleteAll)}
-            className={`${itemClass} text-error hover:bg-error/15`}
-          >
-            {deletingAll ? m.deletingAll : m.deleteAll}
-          </button>
+              <button
+                ref={(el) => {
+                  itemRefs.current[3] = el;
+                }}
+                type="button"
+                role="menuitem"
+                tabIndex={-1}
+                disabled={raffle.deletingAll}
+                onClick={() => runAndClose(raffle.onDeleteAll)}
+                className={`${itemClass} text-error hover:bg-error/15`}
+              >
+                {raffle.deletingAll ? m.deletingAll : m.deleteAll}
+              </button>
+            </>
+          )}
 
           <button
             ref={(el) => {

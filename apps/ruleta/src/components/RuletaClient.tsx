@@ -1,11 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 
 import { siteConfig } from "@openruleta/config";
 import type { ParticipantInput } from "@openruleta/core";
 import { Wordmark } from "@openruleta/ui";
 
+import { AppModeToggle } from "@/components/AppModeToggle";
 import { CollaboratorCarousel } from "@/components/CollaboratorCarousel";
 import { DrawModeSelector } from "@/components/draw/DrawModeSelector";
 import { getDrawMode } from "@/components/draw/registry";
@@ -21,6 +30,7 @@ import { QrOverlay } from "@/components/QrOverlay";
 import { SponsorCarousel } from "@/components/SponsorCarousel";
 import { WinnerModal } from "@/components/WinnerModal";
 import { WinnersModal } from "@/components/WinnersModal";
+import { useSoundPreference } from "@/components/useSoundPreference";
 import { downloadCsv, toCsv } from "@/lib/csv";
 import { useWinnerNotification } from "@/lib/useWinnerNotification";
 import { useSoundEngine } from "@/lib/sound/useSoundEngine";
@@ -38,7 +48,6 @@ import {
 
 const POLL_MS = 5000;
 const m = siteConfig.ruleta.messages;
-const SOUND_KEY = `${siteConfig.slug}-ruleta-sound`;
 const fill = (s: string, vars: Record<string, string>) =>
   Object.entries(vars).reduce((acc, [k, v]) => acc.replaceAll(`{${k}}`, v), s);
 
@@ -61,9 +70,9 @@ function downloadWinnersCsv(winners: Participant[]): void {
 }
 
 // All participants, winners included — the full document is exported raw (not
-// masked): the operator already holds the service_role key, so masking it in
-// the CSV would add no privacy. On-screen it stays masked (the screen is
-// projected), so the CSV is the only place the whole value is visible.
+// masked). The full value does reach the operator's browser through the local
+// API (/api/participants), but it is only rendered in the CSVs: on-screen it
+// stays masked because the screen is projected.
 function downloadParticipantsCsv(participants: Participant[]): void {
   const csv = toCsv(
     siteConfig.ruleta.csv.participantsHeaders,
@@ -82,12 +91,14 @@ function downloadParticipantsCsv(participants: Participant[]): void {
   );
 }
 
-export function RuletaClient() {
-  const [participants, setParticipants] = useState<Participant[]>([]);
-  // Session-only skips ("skip and spin again"): NOT persisted, that person did
-  // not win. Confirmed winners are excluded via won_at (Supabase).
-  const [skipIds, setSkipIds] = useState<Set<string>>(new Set());
+type Props = {
+  /** Session-only skips, owned by RuletaApp so they survive a mode switch. */
+  skipIds: Set<string>;
+  setSkipIds: Dispatch<SetStateAction<Set<string>>>;
+};
 
+export function RuletaClient({ skipIds, setSkipIds }: Props) {
+  const [participants, setParticipants] = useState<Participant[]>([]);
   // Seeds the winner modal's prize field so the operator doesn't retype what
   // is being raffled.
   const raffleTitle = useRaffleTitle();
@@ -99,25 +110,7 @@ export function RuletaClient() {
   const [showQr, setShowQr] = useState(false);
   const [showWinners, setShowWinners] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [soundOn, setSoundOn] = useState(() => {
-    try {
-      return window.localStorage.getItem(SOUND_KEY) !== "off";
-    } catch {
-      return true;
-    }
-  });
-
-  function toggleSound() {
-    setSoundOn((on) => {
-      const next = !on;
-      try {
-        window.localStorage.setItem(SOUND_KEY, next ? "on" : "off");
-      } catch {
-        // ignored
-      }
-      return next;
-    });
-  }
+  const [soundOn, toggleSound] = useSoundPreference();
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -429,13 +422,23 @@ export function RuletaClient() {
 
   return (
     <div className="flex h-dvh flex-col bg-[#050505] text-white">
-      <header className="flex h-16 flex-none items-center justify-between border-b border-white/10 px-6">
+      <header className="flex min-h-16 flex-none flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-white/10 px-4 py-2 lg:px-6">
         <Wordmark
           src={siteConfig.assets.logo}
           alt={siteConfig.name}
           className="h-11"
         />
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-2 lg:gap-3">
+          <AppModeToggle
+            disabled={
+              spinning ||
+              modalWinner !== null ||
+              busy ||
+              overlayOpen ||
+              deletingId !== null ||
+              deletingAll
+            }
+          />
           <DrawModeSelector
             value={drawMode}
             onChange={setDrawMode}
@@ -443,11 +446,11 @@ export function RuletaClient() {
           />
           <button
             onClick={() => setShowQr(true)}
-            className="rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+            className="whitespace-nowrap rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
           >
             {m.showQr}
           </button>
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-green-500/10 px-2 py-1 text-xs font-medium text-green-400 ring-1 ring-inset ring-green-500/20">
+          <span className="hidden items-center gap-1.5 whitespace-nowrap rounded-md bg-green-500/10 xl:inline-flex px-2 py-1 text-xs font-medium text-green-400 ring-1 ring-inset ring-green-500/20">
             <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
             {m.privateBadge}
           </span>
@@ -467,20 +470,23 @@ export function RuletaClient() {
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        <main className="relative flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto md:flex-row md:overflow-hidden">
+        <main className="relative flex h-[85dvh] min-h-[560px] flex-none flex-col overflow-hidden md:h-auto md:min-h-0 md:flex-1">
           <div className="flex-none pt-3">
             <SponsorCarousel />
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 px-8 py-8">
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-4 py-4 lg:gap-6 lg:px-8 lg:py-6">
             <EditableTitle />
 
-            {/* The wheel keeps its compact size so title + wheel + Spin sit
-                centred as one block; the other modes fill the stage. */}
+            {/* The wheel caps at its compact size so title + wheel + Spin sit
+                centred as one block, and shrinks on short screens; the other
+                modes fill the stage. */}
             <div
-              className={`flex w-full items-center justify-center ${
-                renderedDrawMode === "wheel" ? "flex-none" : "min-h-0 flex-1"
+              className={`flex min-h-0 w-full flex-1 items-center justify-center ${
+                renderedDrawMode === "wheel"
+                  ? "max-h-[460px] [container-type:size]"
+                  : ""
               }`}
             >
               <ActiveDrawMode
@@ -494,32 +500,34 @@ export function RuletaClient() {
               />
             </div>
 
-            <div className="flex flex-col items-center gap-3">
+            <div className="flex flex-none flex-col items-center gap-2 lg:gap-3">
               <button
                 onClick={spin}
                 disabled={!canSpin}
-                className="rounded-pill bg-primary px-14 py-4 text-sm font-semibold uppercase tracking-wider text-white shadow-lg transition hover:scale-105 hover:bg-primary-hover active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
+                className="rounded-pill bg-primary px-10 py-4 sm:px-14 text-sm font-semibold uppercase tracking-wider text-white shadow-lg transition hover:scale-105 hover:bg-primary-hover active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
               >
                 {spinning ? m.spinning : m.spin}
               </button>
 
-              {winners.length > 0 && (
-                <button
-                  onClick={() => setShowWinners(true)}
-                  className="rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/20"
-                >
-                  {fill(m.viewWinners, { n: String(winners.length) })}
-                </button>
-              )}
+              {(winners.length > 0 || skipIds.size > 0) && (
+                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+                  {winners.length > 0 && (
+                    <button
+                      onClick={() => setShowWinners(true)}
+                      className="rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/20"
+                    >
+                      {fill(m.viewWinners, { n: String(winners.length) })}
+                    </button>
+                  )}
 
-              {(skipIds.size > 0 || winners.length > 0) && (
-                <button
-                  onClick={resetRound}
-                  disabled={busy}
-                  className="text-sm text-white/50 underline transition hover:text-white disabled:opacity-40"
-                >
-                  {m.resetDraw}
-                </button>
+                  <button
+                    onClick={resetRound}
+                    disabled={busy}
+                    className="text-sm text-white/50 underline transition hover:text-white disabled:opacity-40"
+                  >
+                    {m.resetDraw}
+                  </button>
+                </div>
               )}
 
               {activePool.length === 0 && participants.length > 0 && (
@@ -537,7 +545,7 @@ export function RuletaClient() {
           </div>
         </main>
 
-        <div className="w-80 flex-none md:w-96">
+        <div className="h-[70dvh] w-full flex-none md:h-auto md:w-80 lg:w-96">
           <ParticipantsPanel
             participants={participants}
             removedIds={skipIds}

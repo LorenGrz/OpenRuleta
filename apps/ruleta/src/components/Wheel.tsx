@@ -2,6 +2,13 @@
 
 import { siteConfig } from "@openruleta/config";
 
+import { pickSegmentFill } from "@/lib/wheelFills";
+import {
+  fitLabel,
+  LABEL_LINE_HEIGHT,
+  LABEL_TEXT_END_RADIUS,
+} from "@/lib/wheelLabel";
+
 const { wheelSegmentFills, wheelRimColor } = siteConfig.ruleta;
 
 const VB = 100;
@@ -18,6 +25,14 @@ type Props = {
   durationMs: number;
   spinning: boolean;
   onSettled: () => void;
+  /** Segment fills; defaults to the raffle's two-colour `wheelSegmentFills`. */
+  fills?: readonly string[];
+  /** Show each entry's whole name (radial, up to two lines) instead of its
+   *  first word or initials. */
+  fullLabels?: boolean;
+  /** Tailwind max-width of the wheel; defaults to the raffle's 460px, or
+   *  less when its size container is smaller. */
+  maxWidthClassName?: string;
 };
 
 function polar(angleDeg: number, radius: number): [number, number] {
@@ -56,13 +71,17 @@ export function Wheel({
   durationMs,
   spinning,
   onSettled,
+  fills = wheelSegmentFills,
+  fullLabels = false,
+  maxWidthClassName = "max-w-[min(460px,100cqmin)]",
 }: Props) {
   const n = entries.length;
   const seg = n > 0 ? 360 / n : 360;
   const fontSize = n <= 8 ? 3.8 : n <= 16 ? 3 : n <= 32 ? 2.2 : 0;
+  const mid = (i: number) => i * seg + seg / 2;
 
   return (
-    <div className="relative aspect-square w-full max-w-[460px]">
+    <div className={`relative aspect-square w-full ${maxWidthClassName}`}>
       <div className="absolute -top-2 left-1/2 z-10 -translate-x-1/2 drop-shadow-lg">
         <svg width="34" height="30" viewBox="0 0 34 30" aria-hidden>
           <path d="M17 30 L0 0 L34 0 Z" fill="#ffffff" />
@@ -91,25 +110,57 @@ export function Wheel({
           }}
         >
           {n === 0 && <circle cx={C} cy={C} r={R} fill={wheelRimColor} />}
-          {n === 1 && (
-            <circle cx={C} cy={C} r={R} fill={wheelSegmentFills[0]} />
-          )}
+          {n === 1 && <circle cx={C} cy={C} r={R} fill={fills[0]} />}
           {n > 1 &&
             entries.map((entry, i) => (
               <path
                 key={entry.id}
                 d={segmentPath(i, seg)}
-                fill={wheelSegmentFills[i % 2]}
+                fill={pickSegmentFill(i, n, fills)}
                 stroke="#ffffff"
                 strokeWidth={0.5}
               />
             ))}
 
-          {fontSize > 0 &&
+          {fullLabels &&
+            n > 1 &&
+            entries.map((entry, i) => {
+              const { lines, fontSize: size } = fitLabel(entry.name, n);
+              const lineHeight = size * LABEL_LINE_HEIGHT;
+              return (
+                <text
+                  key={`t-${entry.id}`}
+                  x={C + LABEL_TEXT_END_RADIUS}
+                  y={C}
+                  fill="#ffffff"
+                  fontSize={size}
+                  fontWeight={600}
+                  textAnchor="end"
+                  dominantBaseline="central"
+                  transform={`rotate(${mid(i) - 90} ${C} ${C})`}
+                >
+                  {lines.map((line, k) => (
+                    <tspan
+                      key={k}
+                      x={C + LABEL_TEXT_END_RADIUS}
+                      dy={
+                        k === 0
+                          ? -((lines.length - 1) * lineHeight) / 2
+                          : lineHeight
+                      }
+                    >
+                      {line}
+                    </tspan>
+                  ))}
+                </text>
+              );
+            })}
+
+          {!fullLabels &&
+            fontSize > 0 &&
             entries.map((entry, i) => {
               const text = label(entry.name, n);
               if (!text) return null;
-              const mid = i * seg + seg / 2;
               return (
                 <text
                   key={`t-${entry.id}`}
@@ -120,7 +171,7 @@ export function Wheel({
                   fontWeight={600}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  transform={`rotate(${mid} ${C} ${C})`}
+                  transform={`rotate(${mid(i)} ${C} ${C})`}
                 >
                   {text}
                 </text>

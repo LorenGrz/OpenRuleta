@@ -67,6 +67,10 @@ The mock activates automatically whenever `NEXT_PUBLIC_SUPABASE_URL` is unset.
 Force it either way with `OPENRULETA_MOCK_DB=1` (always mock) or `=0` (always
 require Supabase). It's a dev aid only — for a real event, set up Supabase below.
 
+**Do not import or enter real participant data (CSV import, form) while Supabase
+is not configured:** the mock store writes it, full documents included, to a
+plain JSON file in your OS temp directory.
+
 ## Setup
 
 You need Node 20+, [pnpm](https://pnpm.io) 9+, and a Supabase project.
@@ -109,6 +113,14 @@ cp apps/ruleta/.env.example apps/ruleta/.env.local
 pnpm dev          # → form on http://localhost:3000 + wheel on http://localhost:3100
 # or one at a time: pnpm dev:form / pnpm dev:ruleta
 ```
+
+`pnpm dev` checks Supabase once at startup (a read-only `limit=0` request using
+the credentials in `apps/ruleta/.env.local`). If the project is unreachable or
+lacks the current schema, it prints a warning and starts both apps on the mock
+store so they share the same data. A `OPENRULETA_MOCK_DB` you set yourself is
+respected and skips the check. `pnpm dev:form` and `pnpm dev:ruleta` do **not**
+run this check. The fallback is local-only: there is none at runtime or in
+production, where a Supabase failure surfaces as an error.
 
 Open the form, sign up a few test people, then open the wheel and spin.
 
@@ -167,8 +179,21 @@ so its API can read, update and delete every participant. By default it is
   challenges **every** request — pages and API — with HTTP Basic Auth, so the
   service_role-backed routes are never open on the public URL. Use a strong
   password; add your host's rate limiting or an IP allow-list on top if you can.
+  `pnpm dev:ruleta` and `start` listen on `127.0.0.1` only (nobody on the same
+  Wi-Fi can reach them); hosting needs `next start -H 0.0.0.0` (plus the port
+  your host expects), always together with `RULETA_BASIC_AUTH`.
 
 Do not host the wheel without `RULETA_BASIC_AUTH` set.
+
+### Prize wheel mode
+
+Next to the raffle, the wheel app has a **Prize wheel** mode (toggle in the
+header) for a stand: it spins over a list of prizes (2 to 16), picks one by
+weight and shows it with confetti. There is no stock, no history and no
+database, so it works without Supabase. "Edit prizes" opens an editor (names up
+to 40 characters, integer weights 0-100; weight 0 keeps a prize on the wheel but
+it never comes up). The list lives in the browser's `localStorage`; the defaults
+and every text are in `siteConfig.ruleta.prizeWheel`.
 
 ## Make it yours
 
@@ -196,10 +221,11 @@ One table, `public.participants`. The form inserts `name` / `email` /
 column is legacy and no longer written); a unique index on `lower(email)` rejects duplicates with a `409`.
 The wheel sets `won_at` and `prize` on winners so they stay excluded across
 spins, and `notified_at` when the winner email is sent (real over SMTP if `SMTP_USER`/`SMTP_PASS` are set, else simulated); "reset draw"
-clears all three. Existing databases: re-run `supabase/schema.sql` to add
-`notified_at` (additive, idempotent) before deploying this version. The wheel resolves a spin against a frozen copy
+clears all three. Existing databases: re-run `supabase/schema.sql` (idempotent) before deploying this version:
+it adds `notified_at` and `document`, and see the migration note in "Deploying the form". The wheel resolves a spin against a frozen copy
 of the list, and pauses polling while it spins or a modal is open, so a
-background refresh can't shift the result mid-animation.
+background refresh can't shift the result mid-animation. The prize wheel mode
+stores nothing in the database (its prizes live in the browser's `localStorage`).
 
 ## Commands
 

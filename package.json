@@ -6,7 +6,7 @@
   "license": "MIT",
   "packageManager": "pnpm@11.24.0",
   "scripts": {
-    "dev": "pnpm --parallel --filter @openruleta/form --filter @openruleta/ruleta dev",
+    "dev": "node scripts/dev.mjs",
     "dev:form": "pnpm --filter @openruleta/form dev",
     "dev:ruleta": "pnpm --filter @openruleta/ruleta dev",
     "poster": "pnpm --filter @openruleta/form poster",

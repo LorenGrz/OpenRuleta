@@ -5,7 +5,7 @@ import {
   type BatchResult,
 } from "./batch.ts";
 import { isMockDb } from "./mock-db.ts";
-import { fetchAllPages, uniqueById } from "./pagination.ts";
+import { fetchAllPages, rowsFromPage, uniqueById } from "./pagination.ts";
 import { getSupabaseClient } from "./supabase.ts";
 import { isTransientDbError, withRetry } from "./retry.ts";
 import {
@@ -124,15 +124,14 @@ export async function listParticipants(): Promise<WinnerParticipant[]> {
   // Paginated: PostgREST truncates one response at 1000 rows. `id` breaks ties
   // because an imported batch shares one created_at.
   const rows = await fetchAllPages<ParticipantRow>(async (from, to) => {
-    const { data, error } = await supabase
+    const result = await supabase
       .from("participants")
       .select(PARTICIPANT_COLUMNS)
       .order("created_at", { ascending: true })
       .order("id", { ascending: true })
       .range(from, to)
       .returns<ParticipantRow[]>();
-    if (error) throw error;
-    return data ?? [];
+    return rowsFromPage(result);
   });
   return uniqueById(rows).map(toWinnerParticipant);
 }

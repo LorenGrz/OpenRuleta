@@ -19,6 +19,7 @@ See AGENTS.md for detected commands.
 
 ## Current state
 
+- `pnpm dev` runs `scripts/dev.mjs`: one startup Supabase probe (`limit=0`); on failure both apps start with `OPENRULETA_MOCK_DB=1` and a console warning. `dev:form`/`dev:ruleta` skip the probe; no runtime/production fallback.
 - `apps/ruleta` has two app modes, chosen by `useAppMode` (`localStorage`
   `<slug>-ruleta-app-mode`) in `RuletaApp`: the raffle (`RuletaClient`) and the
   stand prize wheel (`PrizeWheelClient`, no API, no polling).

@@ -114,6 +114,14 @@ pnpm dev          # → form on http://localhost:3000 + wheel on http://localhos
 # or one at a time: pnpm dev:form / pnpm dev:ruleta
 ```
 
+`pnpm dev` checks Supabase once at startup (a read-only `limit=0` request using
+the credentials in `apps/ruleta/.env.local`). If the project is unreachable or
+lacks the current schema, it prints a warning and starts both apps on the mock
+store so they share the same data. A `OPENRULETA_MOCK_DB` you set yourself is
+respected and skips the check. `pnpm dev:form` and `pnpm dev:ruleta` do **not**
+run this check. The fallback is local-only: there is none at runtime or in
+production, where a Supabase failure surfaces as an error.
+
 Open the form, sign up a few test people, then open the wheel and spin.
 
 ## Deploying the form for a real event

@@ -26,6 +26,13 @@ pnpm dev          # form on http://localhost:3000 + ruleta on http://localhost:3
                   # (or one at a time: pnpm dev:form / pnpm dev:ruleta)
 ```
 
+`pnpm dev` (`scripts/dev.mjs`) checks Supabase once at startup with the
+credentials in `apps/ruleta/.env.local`; if it is unreachable or the schema is
+out of date it warns in the console and starts both apps with
+`OPENRULETA_MOCK_DB=1`. An already-set `OPENRULETA_MOCK_DB` is respected.
+`pnpm dev:form` / `pnpm dev:ruleta` do not run this check. The fallback is
+local-only: `isMockDb()` is unchanged and production never falls back.
+
 ## Customizing for an event
 
 Everything user-facing is in **three places**, in this order of frequency:
@@ -134,7 +141,8 @@ Replace the placeholder SVGs. The `assets.*` and `sponsors[].src` /
 4. Drop real SVGs into `apps/form/public/` and `apps/ruleta/public/` per the table
    above. Remove unused `placeholder-*.svg`.
 5. `pnpm typecheck && pnpm lint && pnpm test && pnpm build` — all must pass.
-6. `pnpm dev` (mock DB, no `.env` needed) and eyeball both apps.
+6. `pnpm dev` (mock DB when no `.env.local` exists or Supabase does not respond)
+   and eyeball both apps.
 
 ### CSV import API
 

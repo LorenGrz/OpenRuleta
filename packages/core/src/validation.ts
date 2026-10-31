@@ -28,17 +28,18 @@ const DEFAULTS = {
 };
 
 export function validateParticipant(
-  raw: { name?: unknown; email?: unknown; docLast3?: unknown },
+  raw: { name?: unknown; email?: unknown; document?: unknown },
   options: ValidateOptions = {},
 ): ValidationResult {
   const nameMinLength = options.nameMinLength ?? 2;
   const docEnabled = options.docField?.enabled ?? true;
-  const docPattern = options.docField?.pattern ?? "^\\d{3}$";
+  const docPattern = options.docField?.pattern ?? "^[0-9A-Z]{6,20}$";
   const msg = { ...DEFAULTS, ...options.messages };
 
   const name = typeof raw.name === "string" ? raw.name.trim() : "";
   const email = typeof raw.email === "string" ? raw.email.trim() : "";
-  const docLast3 = typeof raw.docLast3 === "string" ? raw.docLast3.trim() : "";
+  const document =
+    typeof raw.document === "string" ? normalizeDoc(raw.document) : "";
 
   const errors: FieldErrors = {};
 
@@ -48,8 +49,8 @@ export function validateParticipant(
   if (!EMAIL_RE.test(email)) {
     errors.email = msg.emailError;
   }
-  if (docEnabled && !new RegExp(docPattern).test(docLast3)) {
-    errors.docLast3 = msg.docError;
+  if (docEnabled && !new RegExp(docPattern).test(document)) {
+    errors.document = msg.docError;
   }
 
   if (Object.keys(errors).length > 0) return { ok: false, errors };
@@ -58,12 +59,20 @@ export function validateParticipant(
     data: {
       name,
       email: email.toLowerCase(),
-      docLast3: docEnabled ? docLast3 : "",
+      document: docEnabled ? document : "",
     },
   };
 }
 
-/** "492" -> "••• 492" for display. The full document is never collected. */
-export function maskDoc(docLast3: string, glyph = "•••"): string {
-  return `${glyph} ${docLast3}`;
+/** Strips dots, spaces and dashes and uppercases: "30.123.456" -> "30123456". */
+function normalizeDoc(value: string): string {
+  return value.replace(/[.\s-]/g, "").toUpperCase();
+}
+
+/**
+ * "30123456" -> "••• 456". Shows only the last 3 characters: the full document
+ * is stored, but screens that get projected to an audience must not show it.
+ */
+export function maskDoc(document: string, glyph = "•••"): string {
+  return `${glyph} ${document.slice(-3)}`;
 }

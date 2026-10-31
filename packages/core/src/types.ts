@@ -3,8 +3,8 @@
 export type ParticipantInput = {
   name: string;
   email: string;
-  /** Empty string when the document field is disabled in config. */
-  docLast3: string;
+  /** Full document, normalized. Empty string when the field is disabled in config. */
+  document: string;
 };
 
 export type FieldErrors = Partial<Record<keyof ParticipantInput, string>>;
@@ -14,7 +14,8 @@ export type Participant = {
   id: string;
   name: string;
   email: string;
-  docLast3: string;
+  /** Full document from the DB; only the last 3 characters from `addParticipant`. */
+  document: string;
   createdAt: string;
 };
 
@@ -33,7 +34,10 @@ export type ParticipantRow = {
   id: string;
   name: string;
   email: string;
+  /** Legacy column: no longer written, kept for rows created before `document`. */
   doc_last3: string | null;
+  /** Absent in mock-store files written before this column existed. */
+  document?: string | null;
   created_at: string;
   won_at: string | null;
   prize: string | null;
@@ -41,14 +45,14 @@ export type ParticipantRow = {
 };
 
 export const PARTICIPANT_COLUMNS =
-  "id, name, email, doc_last3, created_at, won_at, prize, notified_at";
+  "id, name, email, document, doc_last3, created_at, won_at, prize, notified_at";
 
 export function toWinnerParticipant(row: ParticipantRow): WinnerParticipant {
   return {
     id: row.id,
     name: row.name,
     email: row.email,
-    docLast3: row.doc_last3 ?? "",
+    document: row.document ?? row.doc_last3 ?? "",
     createdAt: row.created_at,
     wonAt: row.won_at,
     prize: row.prize,

@@ -74,7 +74,7 @@ export async function addParticipant(
       id: "",
       name: input.name,
       email: input.email,
-      docLast3: input.docLast3,
+      document: input.document.slice(-3),
       createdAt: new Date().toISOString(),
     };
   }
@@ -87,7 +87,7 @@ export async function addParticipant(
         const { error, status } = await supabase.from("participants").insert({
           name: input.name,
           email: input.email,
-          doc_last3: input.docLast3 ? input.docLast3 : null,
+          document: input.document ? input.document : null,
         });
         // supabase-js returns Postgres/PostgREST errors instead of throwing;
         // rethrow (with the HTTP status attached) so withRetry can classify.
@@ -102,12 +102,13 @@ export async function addParticipant(
   }
 
   // The anon key cannot read the row back (RLS). The form only needs the name
-  // and the masked document for the ticket, so return that.
+  // and the last 3 characters of the document for the ticket, so return that
+  // (never the full value).
   return {
     id: "",
     name: input.name,
     email: input.email,
-    docLast3: input.docLast3,
+    document: input.document.slice(-3),
     createdAt: new Date().toISOString(),
   };
 }

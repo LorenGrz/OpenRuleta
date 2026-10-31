@@ -114,6 +114,13 @@ Open the form, sign up a few test people, then open the wheel and spin.
 
 ## Deploying the form for a real event
 
+**Run `supabase/schema.sql` first, before deploying** (it is idempotent). It adds
+the `document` column; without it the form's insert and the wheel's participant
+list both fail. It also moves the anon `INSERT` grant from `doc_last3` to
+`document`, so the previous form deployment stops accepting sign-ups between the
+SQL and the deploy: do not migrate while sign-ups are open. Rolling back needs
+the grant restored (`grant insert (name, email, doc_last3) ...`).
+
 `apps/form` is the deployable half. On **Vercel**:
 
 1. Import the repo. Set **Root Directory** to `apps/form`.
@@ -132,6 +139,10 @@ The anon key can only `INSERT` into `participants` (enforced by RLS in
 
 During the event, run `apps/ruleta` locally against the **same** Supabase
 project — it picks up new sign-ups automatically (it polls every few seconds).
+
+The form stores the participant's full ID number. After the event, export the
+CSVs and **delete the participants** ("Delete all participants" in the wheel menu or
+`delete from public.participants`), then pause the projects.
 
 ## Running the wheel: local or hosted
 
@@ -171,7 +182,9 @@ writes `apps/ruleta/public/poster.png`, which supersedes the
 ## How the data works
 
 One table, `public.participants`. The form inserts `name` / `email` /
-`doc_last3`; a unique index on `lower(email)` rejects duplicates with a `409`.
+`document` (the full ID, personal data — see
+[ADR 0002](docs/decisions/0002-store-full-document.md); the old `doc_last3`
+column is legacy and no longer written); a unique index on `lower(email)` rejects duplicates with a `409`.
 The wheel sets `won_at` and `prize` on winners so they stay excluded across
 spins, and `notified_at` when the winner email is sent (real over SMTP if `SMTP_USER`/`SMTP_PASS` are set, else simulated); "reset draw"
 clears all three. Existing databases: re-run `supabase/schema.sql` to add

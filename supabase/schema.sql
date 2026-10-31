@@ -14,9 +14,13 @@ create table if not exists public.participants (
   id         uuid primary key default gen_random_uuid(),
   name       text not null,
   email      text not null,
-  -- Optional. The form can be configured to drop this field entirely
-  -- (packages/config → form.docField.enabled = false), in which case it is null.
+  -- Legacy: last 3 digits of the ID. No longer written (the form stores the
+  -- full `document`); kept so existing rows and their check keep working.
   doc_last3  text check (doc_last3 is null or doc_last3 ~ '^\d{3}$'),
+  -- Full document (normalized: no dots/spaces/dashes, uppercase). Optional: the
+  -- form can drop the field (packages/config → form.docField.enabled = false),
+  -- in which case it is null. Personal data: delete rows after the event.
+  document   text,
   created_at timestamptz not null default now(),
   -- Set by the wheel app when this person wins. null = still in the pool.
   -- Persistent: a winner stays excluded across draws and machines.
@@ -32,6 +36,14 @@ create table if not exists public.participants (
 alter table public.participants add column if not exists won_at timestamptz;
 alter table public.participants add column if not exists prize  text;
 alter table public.participants add column if not exists notified_at timestamptz;
+alter table public.participants add column if not exists document text;
+
+-- `add column if not exists` skips the inline check on existing databases, so
+-- declare it as a named constraint (idempotent).
+alter table public.participants drop constraint if exists participants_document_len;
+alter table public.participants
+  add constraint participants_document_len
+  check (document is null or char_length(document) <= 32);
 
 -- One entry per email address (case-insensitive). This unique index is what
 -- raises SQLSTATE 23505 -> the form route answers 409.
@@ -75,4 +87,4 @@ revoke select, update, delete, truncate, references, trigger
   on public.participants from anon, authenticated;
 
 revoke insert on public.participants from anon, authenticated;
-grant  insert (name, email, doc_last3) on public.participants to anon, authenticated;
+grant  insert (name, email, document) on public.participants to anon, authenticated;

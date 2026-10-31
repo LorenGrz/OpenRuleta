@@ -49,7 +49,7 @@ function downloadWinnersCsv(winners: Participant[]): void {
     winners.map((w) => [
       w.name,
       w.email,
-      w.docLast3,
+      w.document,
       w.prize ?? "",
       w.wonAt ?? "",
     ]),
@@ -57,17 +57,17 @@ function downloadWinnersCsv(winners: Participant[]): void {
   downloadCsv(csvFilename(siteConfig.ruleta.csv.filenamePrefix), csv);
 }
 
-// All participants, winners included — doc is exported raw (not masked):
-// the stored value is already just the last 3 digits, so masking it in the
-// CSV would only hide data the operator (who holds the service_role key)
-// already has full access to, with no added privacy benefit.
+// All participants, winners included — the full document is exported raw (not
+// masked): the operator already holds the service_role key, so masking it in
+// the CSV would add no privacy. On-screen it stays masked (the screen is
+// projected), so the CSV is the only place the whole value is visible.
 function downloadParticipantsCsv(participants: Participant[]): void {
   const csv = toCsv(
     siteConfig.ruleta.csv.participantsHeaders,
     participants.map((p) => [
       p.name,
       p.email,
-      p.docLast3,
+      p.document,
       p.createdAt,
       p.wonAt ?? "",
       p.prize ?? "",

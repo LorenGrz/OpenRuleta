@@ -30,8 +30,6 @@ export type DocFieldConfig = {
   label: string;
   hint: string;
   placeholder: string;
-  /** Max characters accepted by the input. */
-  maxLength: number;
   /** Regex source (no slashes) the value must match when the field is enabled. */
   pattern: string;
   /** Prefix shown before the masked value, e.g. "ID ••• 123". */
@@ -359,11 +357,10 @@ export const siteConfig = defineSiteConfig({
     nameMinLength: 2,
     docField: {
       enabled: true,
-      label: "Last 3 digits of your ID",
-      hint: "We only store the last 3 digits — never your full ID number.",
-      placeholder: "e.g. 123",
-      maxLength: 3,
-      pattern: "^\\d{3}$",
+      label: "ID number",
+      hint: "Your full ID or passport number. Dots, spaces and dashes are ignored.",
+      placeholder: "e.g. 30.123.456",
+      pattern: "^[0-9A-Z]{6,20}$",
       displayLabel: "ID",
       maskGlyph: "•••",
     },
@@ -371,7 +368,7 @@ export const siteConfig = defineSiteConfig({
       sponsorsLabel: "Sponsors",
       collaboratorsLabel: "Collaborators",
       privacyNote:
-        "We use your details only to run this raffle and contact the winner.",
+        "We store your name, email and full ID number only to run this raffle, verify and contact the winner. They are deleted after the event.",
       heading: "Join the raffle",
       subtitle: "Enter your details below for a chance to win.",
       logoAlt: "OpenRuleta",
@@ -391,7 +388,7 @@ export const siteConfig = defineSiteConfig({
       deviceNote: "This device has already entered once. One entry per person.",
       nameError: "Please enter your name.",
       emailError: "Please enter a valid email address.",
-      docError: "Must be exactly 3 digits.",
+      docError: "Enter your full ID number (6 to 20 letters or digits).",
       offline: "You appear to be offline. Check your connection.",
       genericError: "Could not submit the form.",
       invalidJson: "Invalid JSON.",
@@ -437,12 +434,12 @@ export const siteConfig = defineSiteConfig({
     },
     csv: {
       filenamePrefix: "winners",
-      headers: ["name", "email", "id_last_3", "prize", "won_at"],
+      headers: ["name", "email", "document", "prize", "won_at"],
       participantsFilenamePrefix: "participants",
       participantsHeaders: [
         "name",
         "email",
-        "id_last_3",
+        "document",
         "created_at",
         "won_at",
         "prize",
